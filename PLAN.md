@@ -70,6 +70,6 @@ OWASP Top 10:2025 취약점을 넣은 웹앱을 직접 만들고, 공격·조치
 - [ ] 팀원별 W·S1·S2 배정(S1 = Burp Suite 희망자)
 - [ ] Burp Suite 에디션(Community 또는 Professional)
 - [ ] OWASP Top 10 기준 판(2025 또는 2021)
-- [ ] 웹앱 기술 스택
+- [x] 웹앱 기술 스택: Django
 - [ ] 보고서 양식과 발표 시간
 - [ ] 저장소·이슈 관리 도구

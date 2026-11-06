@@ -22,6 +22,14 @@ docker compose up -d
 
 결과는 `reports/`에 저장되며 git에는 올리지 않는다.
 
+## 의존성 스캔 (Django)
+
+```bash
+python3 -m venv .venv
+.venv/bin/pip install pip-audit
+.venv/bin/pip-audit -r <웹앱 경로>/requirements.txt
+```
+
 ## 주의
 
 - 능동 스캔은 `zap-active-plan.yaml`의 `includePaths` 범위만 공격한다. 범위를 넓힐 때는 `setup`, `logout`, `security`, `csrf`를 제외 상태로 유지한다. 이 페이지들을 공격하면 DB 초기화, 로그아웃, 비밀번호 변경이 일어날 수 있다.
