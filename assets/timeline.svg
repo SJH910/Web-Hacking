@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 416" width="760" height="416" font-family="Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif" font-size="13" role="img" aria-label="11월 20일까지 끝내고 주말 이틀을 예비일로 둔다">
+  <rect width="760" height="416" fill="#ffffff"/>
+  <text x="24" y="28" font-size="15" font-weight="600" fill="#1f2328">11월 20일까지 끝내고 주말 이틀을 예비일로 둔다</text>
+  <text x="24" y="48" font-size="11.5" fill="#57606a">평일 기준 계획, 2026년 11월 · 눈금은 목요일</text>
+
+  <!-- 시간축: 11/5 ~ 11/23, 하루 = 22.74 -->
+  <g stroke="#e3e5e8">
+    <line x1="200" x2="200" y1="88" y2="392"/>
+    <line x1="359.16" x2="359.16" y1="88" y2="392"/>
+    <line x1="518.32" x2="518.32" y1="88" y2="392"/>
+  </g>
+  <g font-size="11.5" fill="#57606a" text-anchor="middle">
+    <text x="200" y="78">11/5</text>
+    <text x="359.16" y="78">11/12</text>
+    <text x="518.32" y="78">11/19</text>
+  </g>
+  <line x1="200" x2="632" y1="88" y2="88" stroke="#8a8f98" stroke-width="1.25"/>
+
+  <!-- 마감선 -->
+  <line x1="620.63" x2="620.63" y1="88" y2="392" stroke="#2f6feb" stroke-width="1.25" stroke-dasharray="4 4"/>
+
+  <!-- 행 이름 -->
+  <g fill="#1f2328">
+    <text x="24" y="120">착수·환경 구성</text>
+    <text x="24" y="152">웹앱 구현 (W)</text>
+    <text x="24" y="184">구현 완료 점검</text>
+    <text x="24" y="216">블랙박스 진단 (S)</text>
+    <text x="24" y="248">화이트박스 분석 (S)</text>
+    <text x="24" y="280">조치·재검증</text>
+    <text x="24" y="312">보고서·발표 자료</text>
+    <text x="24" y="344">예비일</text>
+    <text x="24" y="376" font-weight="600">최종 마감</text>
+  </g>
+
+  <!-- 리드 라인 -->
+  <g stroke="#e3e5e8">
+    <line x1="200" x2="290.95" y1="148" y2="148"/>
+    <line x1="200" x2="362.53" y1="180" y2="180"/>
+    <line x1="200" x2="313.68" y1="212" y2="212"/>
+    <line x1="200" x2="381.89" y1="244" y2="244"/>
+    <line x1="200" x2="450.11" y1="276" y2="276"/>
+    <line x1="200" x2="612.63" y1="372" y2="372"/>
+  </g>
+
+  <!-- 기간 막대 -->
+  <g fill="#8a8f98" fill-opacity="0.18" stroke="#8a8f98" stroke-width="1.25">
+    <rect x="200" y="109" width="45.47" height="14" rx="7"/>
+    <rect x="290.95" y="141" width="90.95" height="14" rx="7"/>
+    <rect x="313.68" y="205" width="90.95" height="14" rx="7"/>
+    <rect x="381.89" y="237" width="90.95" height="14" rx="7"/>
+    <rect x="450.11" y="269" width="68.21" height="14" rx="7"/>
+    <rect x="518.32" y="301" width="45.47" height="14" rx="7"/>
+    <rect x="563.79" y="333" width="45.47" height="14" rx="7"/>
+  </g>
+
+  <!-- 마일스톤 -->
+  <path d="M370.53 172l8 8l-8 8l-8 -8z" fill="#8a8f98"/>
+  <path d="M620.63 364l8 8l-8 8l-8 -8z" fill="#2f6feb"/>
+
+  <!-- 날짜 -->
+  <g font-size="11.5" fill="#57606a">
+    <text x="255.47" y="120">11/5–11/6</text>
+    <text x="391.89" y="152">11/9–11/12</text>
+    <text x="384.53" y="184">11/12</text>
+    <text x="414.63" y="216">11/10–11/13</text>
+    <text x="482.84" y="248">11/13–11/16</text>
+    <text x="528.32" y="280">11/16–11/18</text>
+    <text x="510.32" y="312" text-anchor="end">11/19–11/20</text>
+    <text x="555.79" y="344" text-anchor="end">11/21–11/22</text>
+    <text x="634.63" y="376" font-weight="600" fill="#1f2328">11/23</text>
+  </g>
+</svg>
