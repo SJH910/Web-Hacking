@@ -1,0 +1,45 @@
+# ZAP Automation Framework: 로그인 세션으로 DVWA 일부 페이지만 능동 스캔
+# 세션 쿠키는 ZAP_AUTH_HEADER 환경 변수로 주입한다(파일에 저장하지 않음).
+env:
+  contexts:
+    - name: dvwa
+      urls:
+        - http://dvwa/vulnerabilities/sqli/
+        - http://dvwa/vulnerabilities/xss_r/
+      includePaths:
+        - "http://dvwa/vulnerabilities/(sqli|xss_r)/.*"
+      excludePaths:
+        - "http://dvwa/(logout|setup|security|login)\\.php.*"
+        - "http://dvwa/vulnerabilities/csrf/.*"
+  parameters:
+    failOnError: true
+    progressToStdout: true
+
+jobs:
+  - type: requestor
+    requests:
+      - url: "http://dvwa/vulnerabilities/sqli/?id=1&Submit=Submit"
+        method: GET
+      - url: "http://dvwa/vulnerabilities/xss_r/?name=test"
+        method: GET
+  - type: passiveScan-wait
+    parameters:
+      maxDuration: 2
+  - type: activeScan
+    parameters:
+      context: dvwa
+      maxRuleDurationInMins: 1
+      maxScanDurationInMins: 6
+  - type: passiveScan-wait
+    parameters:
+      maxDuration: 2
+  - type: report
+    parameters:
+      template: traditional-json
+      reportDir: /zap/wrk
+      reportFile: active.json
+  - type: report
+    parameters:
+      template: traditional-html
+      reportDir: /zap/wrk
+      reportFile: active.html

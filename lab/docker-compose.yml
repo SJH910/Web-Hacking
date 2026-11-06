@@ -1,0 +1,44 @@
+# B1 연습 환경: DVWA(의도적 취약 앱) + ZAP
+# DVWA는 127.0.0.1에만 바인딩한다. 포트 바인딩을 0.0.0.0으로 바꾸지 말 것.
+name: web-hacking-lab
+
+services:
+  dvwa:
+    image: ghcr.io/digininja/dvwa:latest
+    environment:
+      DB_SERVER: db
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:4280:80"
+    networks:
+      - lab
+
+  db:
+    image: mariadb:10
+    environment:
+      # 연습용 기본값. 실제 서비스에 재사용 금지
+      MYSQL_ROOT_PASSWORD: dvwa
+      MYSQL_DATABASE: dvwa
+      MYSQL_USER: dvwa
+      MYSQL_PASSWORD: p@ssw0rd
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - lab
+
+  zap:
+    image: ghcr.io/zaproxy/zaproxy:stable
+    profiles: ["scan"]
+    user: zap
+    volumes:
+      - ./reports:/zap/wrk:rw
+    networks:
+      - lab
+
+networks:
+  lab:
