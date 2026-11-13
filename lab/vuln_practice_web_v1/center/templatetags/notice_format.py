@@ -1,0 +1,46 @@
+import re
+
+from django import template
+from django.utils.safestring import mark_safe
+
+register = template.Library()
+
+_BOLD = re.compile(r'\*\*(.+?)\*\*')
+
+
+@register.filter
+def notice_format(text):
+    """공지 본문의 간단한 서식: **굵게**, ## 소제목, - 목록, 빈 줄은 문단, 줄바꿈은 <br>."""
+    out, items = [], []
+
+    def inline(s):
+        return _BOLD.sub(r'<strong>\1</strong>', s)
+
+    def flush():
+        if items:
+            out.append('<ul>' + ''.join(f'<li>{inline(i)}</li>' for i in items) + '</ul>')
+            items.clear()
+
+    paragraph = []
+
+    def end_paragraph():
+        if paragraph:
+            out.append('<p>' + '<br>'.join(inline(l) for l in paragraph) + '</p>')
+            paragraph.clear()
+
+    for line in (text or '').replace('\r\n', '\n').split('\n'):
+        if line.startswith('- '):
+            end_paragraph()
+            items.append(line[2:])
+            continue
+        flush()
+        if line.startswith('## '):
+            end_paragraph()
+            out.append(f'<h3>{inline(line[3:])}</h3>')
+        elif line.strip() == '':
+            end_paragraph()
+        else:
+            paragraph.append(line)
+    flush()
+    end_paragraph()
+    return mark_safe(''.join(out))
