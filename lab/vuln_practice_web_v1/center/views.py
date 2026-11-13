@@ -121,7 +121,7 @@ def limited_login(login_view):
         response = login_view(request)
         if request.method == 'POST':
             if response.status_code == 200:      # 실패하면 폼이 다시 그려져 200
-                security_log.warning('login_failed ip=%s who=%s', ip, name[:8])   # who: 아이디의 해시 앞 8자
+                pass
             else:
                 security_log.info('login_ok ip=%s user_id=%s', ip, getattr(request.user, 'pk', None))
         return response
@@ -277,7 +277,6 @@ def board(request):
             AttendanceLog.add(rec, before, Attendance.BY_STAFF, request.user)
         return redirect(f"{request.path}?date={date}")
 
-    security_log.info('board_view user_id=%s date=%s', request.user.pk, date)   # 아동 실명이 보이는 화면의 열람 기록
     records = {a.child_id: a for a in Attendance.objects.filter(date=date)}
     children = [(c, records.get(c.id)) for c in Child.objects.filter(active=True)]
     # 그날 이전인데 퇴실이 비어 있는 기록 = 찍고 그냥 간 경우.
@@ -303,7 +302,6 @@ def export(request):
     rows = (Attendance.objects.filter(date__startswith=month)
             .select_related('child').order_by('date', 'child__number'))
 
-    security_log.info('csv_export user_id=%s month=%s rows=%s', request.user.pk, month[:7], len(rows))
     response = HttpResponse(content_type='text/csv; charset=utf-8')
     response['Content-Disposition'] = f'attachment; filename="attendance_{month}.csv"'
     # BOM 을 붙여야 윈도우 엑셀이 더블클릭으로 열 때 한글이 깨지지 않는다.
@@ -339,8 +337,6 @@ def import_children(request):
         save = request.POST.get('save') == '1' and not errors and rows
         if save:
             Child.objects.bulk_create(rows)
-        security_log.info('csv_import user_id=%s saved=%s rows=%s skipped=%s errors=%s', request.user.pk,
-                          bool(save), len(rows), len(skipped), len(errors))
         ctx.update(rows=rows, skipped=skipped, errors=errors, saved=bool(save))
     return render(request, 'center/import_children.html', ctx)
 
@@ -409,6 +405,32 @@ def post_create(request):
             return redirect('post_detail', pk=post.pk)
         error = '제목과 내용을 입력해 주세요.'
     return render(request, 'center/post_form.html', {'error': error})
+
+
+@login_required
+def post_edit(request, pk):
+    """글 수정. 로그인한 사람이면 누구나 — 작성자인지 확인하지 않는다."""
+    post = get_object_or_404(Post, pk=pk)
+    error = None
+    if request.method == 'POST':
+        title = request.POST.get('title', '').strip()[:200]
+        body = request.POST.get('body', '').strip()
+        if title and body:
+            post.title, post.body = title, body
+            post.save(update_fields=['title', 'body'])
+            return redirect('post_detail', pk=pk)
+        error = '제목과 내용을 입력해 주세요.'
+    return render(request, 'center/post_form.html', {'error': error, 'post': post})
+
+
+@login_required
+def post_delete(request, pk):
+    """글 삭제. 로그인한 사람이면 누구나 — 작성자인지 확인하지 않는다."""
+    post = get_object_or_404(Post, pk=pk)
+    if request.method == 'POST':
+        post.delete()
+        return redirect('post_list')
+    return render(request, 'center/post_delete_confirm.html', {'post': post})
 
 
 def post_detail(request, pk):
