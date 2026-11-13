@@ -1,0 +1,16 @@
+# 아동 이름·보호자 연락처가 들어 있다. 절대 커밋하지 않는다.
+db.sqlite3
+
+# 올린 첨부 파일(공지 첨부). 개인정보가 섞일 수 있어 커밋하지 않는다.
+media/
+
+.venv/
+__pycache__/
+*.py[cod]
+.env
+.DS_Store
+logs/
+uploads/
+
+# Google Drive 동기화 임시 폴더
+.tmp.driveupload/
