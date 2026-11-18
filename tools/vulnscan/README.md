@@ -64,3 +64,26 @@ python3 scanner.py --port 8901
 - **양호:** 해당 점검을 통과.
 
 자동 판정은 오탐이 있을 수 있으므로, 중요한 소견은 수동 재현으로 확인한다. 세션 쿠키·시크릿은 결과에 저장하지 않는다.
+
+## 로컬 GPT-2 API 연동 실습 (A05 한 건)
+
+같은 컴퓨터에서 `llm-from-scratch`의 기존 Chapter 7 가중치와 Python 환경을 사용한다.
+아래 명령은 Web-Hacking 저장소 루트에서 각자 다른 터미널에서 실행한다.
+첫 줄의 경로는 로컬 모델 프로젝트 위치에 맞춘다.
+
+```bash
+MODEL_DIR="$HOME/projects/llm-from-scratch"
+"$MODEL_DIR/.venv/bin/python" tools/vulnscan/local_model.py --model-dir "$MODEL_DIR" --port 8910
+```
+
+```bash
+python3 tools/vulnscan/scanner.py --llm-port 8910
+```
+
+대시보드 `http://127.0.0.1:8900`에서 실습 웹앱을 능동 스캔한다.
+스캐너가 감지한 첫 A05 의심 소견 카드에 영문 모델 설명이 표시된다.
+스캔 결과의 판정과 모델 설명은 독립적이다. API 오류 시 소견 카드에 오류가 표시되며 기존 판정이 반환된다.
+
+API는 `127.0.0.1`에서 `POST /v1/chat/completions`를 제공한다.
+`model: "local-gpt2"`, 단일 `user` 메시지, 선택적 `max_tokens`를 받는다.
+스캐너는 점검 코드에서 정한 관찰 문장만 보낸다. URL, 응답 본문, 쿠키, 파라미터 값은 전송하지 않는다.

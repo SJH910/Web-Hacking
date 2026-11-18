@@ -743,6 +743,10 @@
   function card(f){
     const ev = f.evidence ? `<div class="evidence">${esc(f.evidence)}</div>` : "";
     const nt = f.note ? `<div class="note">${esc(f.note)}</div>` : "";
+    const review = f.llm_review
+      ? `<div class="note"><strong>로컬 LLM 설명 (실험)</strong><br>${f.llm_review.ok
+          ? esc(f.llm_review.text) : "모델 API에 연결하지 못했거나 응답을 받지 못했습니다."}</div>`
+      : "";
     const learn = OWASP[f.owasp] ? `<div class="learn"><button onclick="openInfo('${f.owasp}')">${f.owasp} 공격이란? ›</button></div>` : "";
     return `<div class="finding s-${f.severity}">
       <div class="top">
@@ -750,7 +754,7 @@
         <h4>${esc(f.title)}</h4>
         <span class="pill b-${f.status}">${STAT[f.status]||f.status}</span>
         <span class="sev b-${f.severity}">${SEV[f.severity]||f.severity}</span>
-      </div>${ev}${nt}${learn}</div>`;
+      </div>${ev}${nt}${review}${learn}</div>`;
   }
 
   function render(r){
