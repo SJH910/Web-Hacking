@@ -18,6 +18,7 @@ from pathlib import Path
 from urllib.parse import urljoin, urlparse
 
 import checks
+from llm_review import review_one_a05
 from safeguards import (ALWAYS_BLOCK, DEFAULT_EXCLUDES, Limiter, LimitExceeded,
                         BlockedTarget, guarded_request, host_allowed, path_excluded,
                         classify_host, is_local)
@@ -227,6 +228,9 @@ class Handler(BaseHTTPRequestHandler):
             rate=float(req.get("rate", 0.2)),
             max_requests=int(req.get("max_requests", 800)),
         )
+        port = getattr(self.server, "llm_port", None)
+        if port and result["ok"] and result["mode"] == "active":
+            review_one_a05(result["findings"], port)
         self._send(200, json.dumps(result, ensure_ascii=False))
 
     def log_message(self, *a):  # 콘솔 소음 억제
@@ -237,8 +241,12 @@ def main():
     ap = argparse.ArgumentParser(description="웹 취약점 분석 도구(학습용, 로컬 전용)")
     ap.add_argument("--port", type=int, default=8900)
     ap.add_argument("--host", default="127.0.0.1")  # 대시보드도 로컬에만 바인딩
+    ap.add_argument("--llm-port", type=int, help="로컬 LLM API 포트 (A05 한 건 분석)")
     args = ap.parse_args()
+    if args.llm_port is not None and not 1 <= args.llm_port <= 65535:
+        ap.error("--llm-port must be between 1 and 65535")
     srv = ThreadingHTTPServer((args.host, args.port), Handler)
+    srv.llm_port = args.llm_port
     print(f"대시보드: http://{args.host}:{args.port}  (학습용·로컬 전용. Ctrl+C 종료)")
     try:
         srv.serve_forever()
