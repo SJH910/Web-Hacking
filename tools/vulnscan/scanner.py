@@ -11,11 +11,12 @@
 """
 import argparse
 import json
+import mimetypes
 import re
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import urljoin, urlparse
+from urllib.parse import unquote, urljoin, urlparse
 
 import checks
 from llm_review import review_one_a05
@@ -24,6 +25,7 @@ from safeguards import (ALWAYS_BLOCK, DEFAULT_EXCLUDES, Limiter, LimitExceeded,
                         classify_host, is_local)
 
 STATIC = Path(__file__).parent / "static"
+GAME_DIR = Path(__file__).resolve().parents[2] / "apps" / "game" / "out"
 LINK_RE = re.compile(r'(?:href|action|src)=["\']([^"\'#]+)["\']', re.I)
 FORM_RE = re.compile(r'<form\b[^>]*>(.*?)</form>', re.I | re.S)
 FORM_ACTION_RE = re.compile(r'action=["\']([^"\']*)["\']', re.I)
@@ -195,8 +197,39 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(data)
 
+    def _serve_game(self, path):
+        """내보낸 게임 파일만 제공한다. 소스나 상위 디렉터리는 공개하지 않는다."""
+        root = GAME_DIR.resolve()
+        try:
+            relative = unquote(path[len("/game/"):])
+            target = (root / relative).resolve()
+            if not target.is_relative_to(root):
+                return self._send(404, '{"error": "not found"}')
+            if target.is_dir():
+                target = (target / "index.html").resolve()
+            if not target.is_relative_to(root):
+                return self._send(404, '{"error": "not found"}')
+            if not target.is_file():
+                if not (root / "index.html").is_file():
+                    return self._send(503, json.dumps({"error": "게임 빌드가 없습니다. apps/game에서 npm ci와 npm run build를 실행하세요."}, ensure_ascii=False))
+                return self._send(404, '{"error": "not found"}')
+            content_type = mimetypes.guess_type(target.name)[0] or "application/octet-stream"
+            if content_type.startswith("text/") or content_type == "application/javascript":
+                content_type += "; charset=utf-8"
+            return self._send(200, target.read_bytes(), content_type)
+        except (ValueError, OSError):
+            return self._send(404, '{"error": "not found"}')
+
     def do_GET(self):
         path = urlparse(self.path).path
+        if path == "/game":
+            self.send_response(308)
+            self.send_header("Location", "/game/")
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+            return
+        if path.startswith("/game/"):
+            return self._serve_game(path)
         if path in ("/", "/index.html"):
             f = STATIC / "index.html"
             return self._send(200, f.read_bytes(), "text/html; charset=utf-8")

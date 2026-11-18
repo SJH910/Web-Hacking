@@ -34,7 +34,7 @@ export default function SiteBgm() {
     <>
       <audio
         ref={audioRef}
-        src="/audio/yongbeom-tower-theme.wav"
+        src="/game/audio/yongbeom-tower-theme.wav"
         preload="none"
         loop
       />

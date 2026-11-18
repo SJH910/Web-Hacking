@@ -24,6 +24,42 @@ python3 scanner.py --port 8901
 
 브라우저에서 대상 URL을 넣고 모드를 고른 뒤 **스캔**.
 
+## 용범의 탑 통합 메뉴
+
+상단 우측 **용범의 탑** 메뉴로 게임 FE를 같은 대시보드에서 연다.
+게임 소스는 `apps/game`이며, `hsj`의 증거 선택·판정 FE를 반영했다.
+
+저장소 루트에서 최초 실행:
+
+```bash
+npm ci --prefix apps/game
+npm run build --prefix apps/game
+python3 -B tools/vulnscan/scanner.py --host 127.0.0.1 --port 8900
+```
+
+- 통합 화면: <http://127.0.0.1:8900/#game>
+- 게임 단독 화면: <http://127.0.0.1:8900/game/>
+- 인트로: <http://127.0.0.1:8900/game/intro/>
+- 게임 소스를 수정하면 `npm run build --prefix apps/game`로 다시 내보낸 뒤 화면을 새로고침한다.
+- Next.js 개발 서버를 별도로 실행할 경우 주소는 `/game/`이다.
+
+게임은 Next.js 정적 내보내기(`output: export`, `basePath: /game`)를 사용한다.
+Python 서버는 `apps/game/out` 안의 파일만 제공하고 상위 경로·외부 심볼릭 링크는 차단한다.
+빌드가 없으면 안내와 재시도 버튼을 표시한다. 별도의 게임 서버나 프록시는 필요 없다.
+
+스캔과 게임 메뉴를 오가도 페이지와 게임 프레임을 재생성하지 않아 해당 화면의 상태를 유지한다.
+새로고침·게임 페이지 간 이동·브라우저 종료 후 저장은 지원하지 않는다.
+게임은 합성 데이터 기반 FE 데모이며 스캔 실행 또는 실제 스캔 소견·LLM과 연결되지 않는다.
+`apps/game/tasks.md`의 서버 판정·터미널·세이브·랭킹은 별도 후속 작업이다.
+
+검증 명령:
+
+```bash
+(cd tools/vulnscan && python3 -B -m unittest test_game_routes -v)
+node --experimental-strip-types --test apps/game/tests/scenarios.test.mjs
+npm run build --prefix apps/game
+```
+
 ## 모드
 
 | 모드 | 내용 |
