@@ -285,7 +285,7 @@ class Handler(BaseHTTPRequestHandler):
         )
         port = getattr(self.server, "llm_port", None)
         if port and result["ok"] and result["mode"] == "active":
-            review_one_a05(result["findings"], port)
+            review_one_a05(result["findings"], port, getattr(self.server, "llm_model", "local-gpt2"))
         self._send(200, json.dumps(result, ensure_ascii=False))
 
     def log_message(self, *a):  # 콘솔 소음 억제
@@ -296,7 +296,9 @@ def main():
     ap = argparse.ArgumentParser(description="웹 취약점 분석 도구(학습용, 로컬 전용)")
     ap.add_argument("--port", type=int, default=8900)
     ap.add_argument("--host", default="127.0.0.1")  # 대시보드도 로컬에만 바인딩
-    ap.add_argument("--llm-port", type=int, help="로컬 LLM API 포트 (A05 한 건 분석)")
+    ap.add_argument("--llm-port", type=int, help="로컬 LLM API 포트 (A05 한 건 분석). 자체 모델 8910, Ollama 11434")
+    ap.add_argument("--llm-model", default="local-gpt2",
+                    help="모델명. 자체 모델=local-gpt2(기본), Ollama=llama3·qwen2.5 등")
     ap.add_argument("--game-db", default=str(Path(__file__).parent / "data" / "game.db"), help="게임 등반·랭킹 SQLite 파일")
     args = ap.parse_args()
     if args.llm_port is not None and not 1 <= args.llm_port <= 65535:
@@ -304,6 +306,7 @@ def main():
     GAMES.store = Store(args.game_db)
     srv = ThreadingHTTPServer((args.host, args.port), Handler)
     srv.llm_port = args.llm_port
+    srv.llm_model = args.llm_model
     print(f"대시보드: http://{args.host}:{args.port}  (학습용·로컬 전용. Ctrl+C 종료)")
     try:
         srv.serve_forever()

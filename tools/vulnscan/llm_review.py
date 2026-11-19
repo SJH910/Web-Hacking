@@ -11,18 +11,20 @@ OBSERVATIONS = {
 }
 
 
-def review_one_a05(findings, port):
+def review_one_a05(findings, port, model="local-gpt2"):
     for finding in findings:
         if finding["owasp"] == "A05" and finding["status"] == "vuln":
             observation = OBSERVATIONS.get(finding["title"])
             if observation:
-                finding["llm_review"] = request_review(observation, port)
+                finding["llm_review"] = request_review(observation, port, model)
                 return
 
 
-def request_review(observation, port):
+def request_review(observation, port, model="local-gpt2"):
+    # model: 자체 모델은 "local-gpt2", Ollama는 "llama3"·"qwen2.5" 등.
+    # 엔드포인트는 OpenAI 호환 /v1/chat/completions 로 동일 → 모델명만 바꾸면 전환.
     payload = {
-        "model": "local-gpt2",
+        "model": model,
         "messages": [{"role": "user", "content": (
             f"Scanner observation: {observation}\n"
             "In two short English sentences, explain what this suggests and how a developer "

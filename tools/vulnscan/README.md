@@ -123,3 +123,21 @@ python3 tools/vulnscan/scanner.py --llm-port 8910
 API는 `127.0.0.1`에서 `POST /v1/chat/completions`를 제공한다.
 `model: "local-gpt2"`, 단일 `user` 메시지, 선택적 `max_tokens`를 받는다.
 스캐너는 점검 코드에서 정한 관찰 문장만 보낸다. URL, 응답 본문, 쿠키, 파라미터 값은 전송하지 않는다.
+
+### 모델 교체 — 자체 모델 ↔ Ollama (로컬·무과금)
+
+연동부가 **OpenAI 호환**이라, 자체 모델 대신 **Ollama를 로컬로** 붙일 수 있다(외부 전송·과금 없음). 코드 변경 없이 **포트·모델명만** 바꾼다.
+
+```bash
+# 1) Ollama 로컬 서버 + 모델 받기 (한 번)
+ollama serve                 # 127.0.0.1:11434 (OpenAI 호환 /v1)
+ollama pull llama3           # 또는 qwen2.5, mistral, deepseek-r1 등 로컬 모델
+
+# 2) 스캐너를 Ollama로 연결 (포트 11434 + 모델명)
+python3 tools/vulnscan/scanner.py --llm-port 11434 --llm-model llama3
+```
+
+- 기본값은 **자체 모델**(`--llm-model local-gpt2`, 포트 8910) — 아무것도 안 바꾸면 기존 그대로.
+- **로컬 전용 유지:** Ollama도 `127.0.0.1`에만 붙는다. 데이터는 밖으로 나가지 않는다.
+- **클라우드 API 금지:** 외부 전송이 생기는 상용 API(DeepSeek/OpenAI 클라우드 등)는 스캐너에 연결하지 않는다.
+- 전송 경계는 동일: 관찰 문장만, URL·응답·쿠키·값은 안 보냄.
