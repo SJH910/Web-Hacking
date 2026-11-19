@@ -4,7 +4,7 @@
 - 접두어: **G** 게임 기획 · **F** 프런트엔드 · **B** 백엔드·보안 · **L** LLM
 - 상태: 예정 / 진행 / 완료 / 보류
 - 번호는 파트 내 **연속**이며, 선행(의존) 태스크를 함께 표기한다.
-- **완료 보고 규칙:** 태스크 완료 시 `apps/game/docs/<ID>.md`에 완료 보고를 남긴다(요약 + 산출물 링크 + 인계 사항). 설계 세부는 묶음 문서(floor-slice-design 등)를 링크로 참조. 완료: [G1](./docs/G1.md) · [G2](./docs/G2.md) · [G3](./docs/G3.md)(1차) · [G4](./docs/G4.md) · [G5](./docs/G5.md) · [G7](./docs/G7.md) · [G8](./docs/G8.md) · [B1](./docs/B1.md)(일부: 풀 16/19) · [B2](./docs/B2.md) · [B3](./docs/B3.md) · [B4](./docs/B4.md) · [B5](./docs/B5.md) · [B6](./docs/B6.md)(최소 구현) · [B8](./docs/B8.md). (G6은 X3로 대체. B7은 선택 과제로 미착수)
+- **완료 보고 규칙:** 태스크 완료 시 `apps/game/docs/<ID>.md`에 완료 보고를 남긴다(요약 + 산출물 링크 + 인계 사항). 설계 세부는 묶음 문서(floor-slice-design 등)를 링크로 참조. 완료: [G1](./docs/G1.md) · [G2](./docs/G2.md) · [G3](./docs/G3.md)(1차) · [G4](./docs/G4.md) · [G5](./docs/G5.md) · [G7](./docs/G7.md) · [G8](./docs/G8.md) · [B1](./docs/B1.md)(풀 19문제, 15+3문제는 기획 검토 대기) · [B2](./docs/B2.md) · [B3](./docs/B3.md) · [B4](./docs/B4.md) · [B5](./docs/B5.md) · [B6](./docs/B6.md)(최소 구현) · [B8](./docs/B8.md). · [B7](./docs/B7.md)(저작용 어댑터). (G6은 X3로 대체)
 
 > 목표 단계: **M1 = 수직 슬라이스**(1개 층·1개 시나리오를 처음부터 끝까지 플레이) → **M2 = 콘텐츠 확장**.
 
