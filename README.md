@@ -48,6 +48,18 @@ OWASP Top 10 취약점을 의도적으로 넣은 웹 애플리케이션을 직�
 └── assets/          # 다이어그램·아이콘
 ```
 
+## 통합 대시보드와 게임 실행
+
+```bash
+npm ci --prefix apps/game
+npm run build --prefix apps/game
+python3 -B tools/vulnscan/scanner.py --host 127.0.0.1 --port 8900
+```
+
+<http://127.0.0.1:8900> 상단 우측 **용범의 탑** 메뉴에서 게임을 연다.
+`apps/game`은 게임 FE, `tools/vulnscan`은 분석 대시보드, `lab`은 실습 대상 앱이다.
+통합 방식과 검증 명령은 [vulnscan 안내](tools/vulnscan/README.md#용범의-탑-통합-메뉴)를 참고한다.
+
 ## 작업 규칙
 
 - 공격은 로컬 Docker 환경(`127.0.0.1` 바인딩)에서만 합니다.

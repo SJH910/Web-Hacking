@@ -355,24 +355,61 @@
   .m-result .rmeta { font-family:var(--mono); font-size:.74rem; color:var(--muted); margin-top:4px; }
   .m-result pre { margin:7px 0 0; padding:8px 10px; background:var(--surface); border:1px solid var(--line);
     border-radius:7px; font-family:var(--mono); font-size:.74rem; overflow-x:auto; white-space:pre-wrap; word-break:break-all; }
+
+  /* 게임은 같은 서버의 정적 빌드를 유지되는 프레임에서 연다. */
+  .game-link { display:inline-flex; align-items:center; gap:7px; white-space:nowrap;
+    padding:7px 12px; border:1px solid var(--line2); border-radius:8px;
+    color:var(--brand); background:var(--brand-soft); text-decoration:none; font-size:.86rem; font-weight:700; }
+  .game-link:hover, .game-link.on { background:var(--brand); color:var(--brand-fg); border-color:var(--brand); }
+  .game-link:focus-visible { outline:3px solid var(--brand); outline-offset:3px; }
+  main.game-open { max-width:1280px; }
+  .game-heading { display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:16px; }
+  .game-heading h1 { font-size:1.25rem; margin:0 0 4px; }
+  .game-heading p { color:var(--muted); font-size:.84rem; margin:0; }
+  .game-heading a { color:var(--brand); font-size:.8rem; white-space:nowrap; }
+  #game-frame { width:100%; height:calc(100dvh - 170px); min-height:540px;
+    border:1px solid var(--line); border-radius:12px; background:var(--bg); }
+  #game-frame[hidden], #game-loading[hidden] { display:none; }
+  #game-loading { padding:24px; margin-bottom:16px; }
+  #game-loading p { margin:0 0 12px; }
+  @media (max-width:800px) {
+    .topbar-in { flex-wrap:wrap; gap:10px; }
+    nav.tabs { order:5; width:100%; margin:0; overflow-x:auto; }
+    nav.tabs a { white-space:nowrap; }
+    .brand .edu { display:none; }
+    .game-heading { align-items:flex-start; flex-direction:column; gap:8px; }
+    main.game-open { padding:16px 8px 32px; }
+  }
 </style>
 </head>
 <body>
 <div class="topbar">
   <div class="topbar-in">
     <a href="#scan" class="brand" title="홈으로"><span class="logo">🛡</span> VulnScan <span class="edu">학습용</span></a>
-    <nav class="tabs">
+    <nav class="tabs" aria-label="분석 메뉴">
       <a href="#scan" id="tab-scan" class="on">스캔</a>
       <a href="#lab" id="tab-lab">실습 미션</a>
       <a href="#cmd" id="tab-cmd">공격 커맨드</a>
       <a href="#owasp" id="tab-owasp">OWASP 사전</a>
     </nav>
     <span class="spacer"></span>
+    <a href="#game" id="tab-game" class="game-link"><span aria-hidden="true">♜</span> 용범의 탑</a>
     <button class="icon-btn" id="theme" title="라이트/다크 전환">◐</button>
   </div>
 </div>
 
 <main>
+  <section class="view" id="view-game" aria-labelledby="game-title">
+    <div class="game-heading">
+      <div><h1 id="game-title">용범의 탑</h1><p>기록을 탐색하고 증거로 판단하는 게임 · 현재는 합성 데이터 기반 FE 데모입니다.</p></div>
+      <a href="/game/" target="_blank" rel="noopener">게임만 새 탭에서 열기 ↗</a>
+    </div>
+    <div class="card" id="game-loading" role="status">
+      <p id="game-message">게임 화면을 준비하고 있습니다.</p>
+      <button type="button" class="seg-btn" id="game-retry" hidden>다시 불러오기</button>
+    </div>
+    <iframe id="game-frame" title="용범의 탑 게임" hidden></iframe>
+  </section>
   <!-- ===== 스캔 뷰 ===== -->
   <section class="view on" id="view-scan">
     <div class="hero">
@@ -626,7 +663,30 @@
   });
 
   // ===== 탭 라우팅 =====
-  const VIEWS = ["scan","lab","cmd","owasp","report"];  // report는 탭 없는 하위 페이지
+  const VIEWS = ["scan","lab","cmd","owasp","report","game"];  // report는 탭 없는 하위 페이지
+  let gameLoading = false;
+  async function loadGame(){
+    const frame = document.getElementById("game-frame");
+    if(frame.hasAttribute("src") || gameLoading) return;
+    gameLoading = true;
+    const loading = document.getElementById("game-loading");
+    const message = document.getElementById("game-message");
+    const retry = document.getElementById("game-retry");
+    retry.hidden = true;
+    message.textContent = "게임 화면을 준비하고 있습니다.";
+    try {
+      const response = await fetch("/game/", {signal: AbortSignal.timeout(10000)});
+      if(!response.ok) throw new Error("게임 빌드가 준비되지 않았습니다. apps/game에서 npm ci와 npm run build를 실행한 뒤 다시 불러오세요.");
+      frame.addEventListener("load", () => { loading.hidden = true; }, {once:true});
+      frame.src = "/game/";
+      frame.hidden = false;
+    } catch(error) {
+      message.textContent = error.name === "TimeoutError" ? "게임 응답이 지연되고 있습니다. 서버 상태를 확인하고 다시 불러오세요." : error.message;
+      retry.hidden = false;
+    } finally { gameLoading = false; }
+  }
+  document.getElementById("game-retry").addEventListener("click", loadGame);
+
   function route(){
     const hash = location.hash.replace("#","");
     const h = VIEWS.includes(hash) ? hash : "scan";
@@ -634,8 +694,14 @@
       const view = document.getElementById("view-"+v);
       if(view) view.classList.toggle("on", v===h);
       const tab = document.getElementById("tab-"+v);
-      if(tab) tab.classList.toggle("on", v===h);   // report엔 탭이 없음 → 건너뜀
+      if(tab) {
+        tab.classList.toggle("on", v===h);
+        if(v===h) tab.setAttribute("aria-current", "page");
+        else tab.removeAttribute("aria-current");
+      }   // report엔 탭이 없음 → 건너뜀
     });
+    document.querySelector("main").classList.toggle("game-open", h==="game");
+    if(h==="game") loadGame();
     if(h==="report") renderReportView();
   }
   addEventListener("hashchange", route);
