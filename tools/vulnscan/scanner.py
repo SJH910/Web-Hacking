@@ -19,6 +19,8 @@ from pathlib import Path
 from urllib.parse import unquote, urljoin, urlparse
 
 import checks
+from game_engine import GAMES
+from game_store import Store
 from llm_review import review_one_a05
 from safeguards import (ALWAYS_BLOCK, DEFAULT_EXCLUDES, Limiter, LimitExceeded,
                         BlockedTarget, guarded_request, host_allowed, path_excluded,
@@ -235,10 +237,30 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(200, f.read_bytes(), "text/html; charset=utf-8")
         if path == "/api/defaults":
             return self._send(200, json.dumps({"excludes": DEFAULT_EXCLUDES}))
+        if path.startswith("/api/game/"):
+            return self._game_api("GET", path)
         return self._send(404, json.dumps({"error": "not found"}))
+
+    def _game_api(self, method, path):
+        body = {}
+        if method == "POST":
+            try:
+                n = int(self.headers.get("Content-Length", 0))
+                if not 0 <= n <= 8192:
+                    return self._send(413, '{"error": "요청이 너무 큽니다."}')
+                body = json.loads(self.rfile.read(n) or b"{}")
+                if not isinstance(body, dict):
+                    raise ValueError
+            except (ValueError, TypeError):
+                return self._send(400, '{"error": "잘못된 요청입니다."}')
+        parts = [unquote(p) for p in path[len("/api/game/"):].split("/") if p]
+        status, obj = GAMES.handle(method, parts, body, self.client_address[0])
+        self._send(status, json.dumps(obj, ensure_ascii=False))
 
     def do_POST(self):
         path = urlparse(self.path).path
+        if path.startswith("/api/game/"):
+            return self._game_api("POST", path)
         if path not in ("/api/scan", "/api/probe"):
             return self._send(404, json.dumps({"error": "not found"}))
         try:
@@ -275,9 +297,11 @@ def main():
     ap.add_argument("--port", type=int, default=8900)
     ap.add_argument("--host", default="127.0.0.1")  # 대시보드도 로컬에만 바인딩
     ap.add_argument("--llm-port", type=int, help="로컬 LLM API 포트 (A05 한 건 분석)")
+    ap.add_argument("--game-db", default=str(Path(__file__).parent / "data" / "game.db"), help="게임 등반·랭킹 SQLite 파일")
     args = ap.parse_args()
     if args.llm_port is not None and not 1 <= args.llm_port <= 65535:
         ap.error("--llm-port must be between 1 and 65535")
+    GAMES.store = Store(args.game_db)
     srv = ThreadingHTTPServer((args.host, args.port), Handler)
     srv.llm_port = args.llm_port
     print(f"대시보드: http://{args.host}:{args.port}  (학습용·로컬 전용. Ctrl+C 종료)")
