@@ -1,22 +1,23 @@
 :root {
-  --page: #f4f6fa;
-  --surface: #ffffff;
-  --surface-soft: #f8f9fc;
-  --ink: #18233a;
-  --muted: #5e6b80;
-  --line: #dfe4ee;
-  --indigo: #4059d9;
-  --indigo-soft: #eef1ff;
-  --violet: #7456c8;
-  --green: #21845a;
-  --green-soft: #edf7f1;
-  --amber: #A96B00;
-  --amber-soft: #fff8e9;
-  --red: #b33a45;
+  /* 검정 + 보라 통일 다크 팔레트 */
+  --page: #0c0a12;
+  --surface: #15121d;
+  --surface-soft: #1c1726;
+  --ink: #ece9f3;
+  --muted: #9a93ab;
+  --line: #2a2436;
+  --indigo: #a07bff;          /* 주 포인트 = 보라 */
+  --indigo-soft: #221a34;
+  --violet: #c3a3ff;
+  --green: #49d17d;
+  --green-soft: #12241a;
+  --amber: #ffcf5a;
+  --amber-soft: #2a2410;
+  --red: #ff6b6b;
   --gold: #e7c477;
 }
 * { box-sizing: border-box; }
-html { min-width: 0; background: var(--page); scroll-padding-top: 24px; }
+html { min-width: 0; background: var(--page); scroll-padding-top: 24px; color-scheme: dark; }
 body { margin: 0; background: var(--page); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", sans-serif; font-size: 14px; -webkit-font-smoothing: antialiased; }
 button, input, select { font: inherit; }
 button { color: inherit; }

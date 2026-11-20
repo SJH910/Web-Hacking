@@ -1,0 +1,46 @@
+.scene {
+  position: relative; min-height: 100vh; min-height: 100dvh;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; padding: 24px; overflow: hidden; color: #ece9f3;
+  background:
+    radial-gradient(1000px 520px at 50% 28%, #241a3e 0%, #130f20 45%, #0a0810 75%, #070509 100%);
+  opacity: 1; transition: opacity .36s ease;
+}
+/* 진입은 즉시 표시(iframe 숨김/표시 타이밍과 겹쳐 검은 화면이 되던 문제 해결).
+   이동 시에만 페이드 아웃 */
+.leaving { opacity: 0; pointer-events: none; }
+/* 은은한 별/먼지 */
+.stars {
+  position: absolute; inset: 0; pointer-events: none; opacity: .5;
+  background-image:
+    radial-gradient(1.4px 1.4px at 20% 30%, #c3a3ff88, transparent),
+    radial-gradient(1.2px 1.2px at 70% 20%, #ffffff66, transparent),
+    radial-gradient(1.6px 1.6px at 40% 70%, #a07bff77, transparent),
+    radial-gradient(1.1px 1.1px at 85% 55%, #ffffff55, transparent),
+    radial-gradient(1.3px 1.3px at 60% 80%, #c3a3ff66, transparent),
+    radial-gradient(1px 1px at 10% 60%, #ffffff44, transparent);
+  animation: drift 14s ease-in-out infinite alternate;
+}
+@keyframes drift { from { transform: translateY(0); } to { transform: translateY(-10px); } }
+
+.logo { margin-bottom: 7vh; position: relative; z-index: 1; }
+.logo .sub { display: block; color: #9a93ab; letter-spacing: .45em; font-size: 12px; margin-bottom: 12px; }
+.logo h1 {
+  margin: 0; font-family: Georgia, "Noto Serif KR", serif; font-weight: 800;
+  font-size: clamp(46px, 9vw, 96px); letter-spacing: .08em;
+  text-shadow: 0 0 34px #a07bff66, 0 0 6px #a07bff55, 0 3px 10px #000;
+}
+.logo .en { display: block; color: #8678aa; letter-spacing: .55em; font-size: 13px; margin-top: 10px; }
+
+.menu { display: flex; flex-direction: column; gap: 16px; position: relative; z-index: 1; }
+.item {
+  appearance: none; background: none; border: 0; color: #d2ccde; cursor: pointer;
+  font-size: 21px; font-weight: 600; letter-spacing: .12em; padding: 6px 28px;
+  transition: color .15s, text-shadow .15s; text-decoration: none;
+}
+.item:hover, .item:focus-visible { color: #fff; text-shadow: 0 0 16px #a07bffcc; outline: none; }
+
+.foot { position: absolute; bottom: 18px; color: #6b6480; font-size: 11px; letter-spacing: .1em; z-index: 1; }
+
+@media (max-width: 600px) { .logo { margin-bottom: 5vh; } }
+@media (prefers-reduced-motion: reduce) { .stars, .scene, .leaving { animation: none; } }
