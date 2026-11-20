@@ -8,6 +8,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import styles from "./redteam.module.css";
 import { useFadeNav } from "../use-fade-nav";
+import { Typewriter } from "../typewriter";
 
 const RT_SAVE_KEY = "ybt-rt-save";
 
@@ -35,6 +36,8 @@ export default function RedTeam() {
   const [result, setResult] = useState<{ ok: boolean; text: string } | null>(null);
   const [cleared, setCleared] = useState(false);
   const [wrong, setWrong] = useState(false);
+  const [trust, setTrust] = useState(60);
+  const [bubble, setBubble] = useState("…");
 
   const go = useCallback(async (p: string, data?: Record<string, string>, forCid?: string) => {
     const useCid = forCid || cid;
@@ -49,32 +52,48 @@ export default function RedTeam() {
     setShowSrc(false);
   }, [cid]);
 
-  const loadFloor = useCallback(async (s: string, n: number) => {
+  const loadFloor = useCallback(async (s: string, n: number, restore?: { hints: string[]; used: number; trust: number }) => {
     const info: StartInfo = await (await fetch(`/api/redteam/floor/${s}/${n}`)).json();
     setInfo(info); setCid(info.challengeId);
-    setUsed(0); setHints([]); setFlag(""); setResult(null); setCleared(false);
-    try { localStorage.setItem(RT_SAVE_KEY, JSON.stringify({ seed: s, floor: n })); } catch { /* 저장 실패 무시 */ }
+    setFlag(""); setResult(null); setCleared(false);
+    if (restore) {  // 이어하기: 신뢰도·받은 힌트 복원
+      setUsed(restore.used); setHints(restore.hints); setTrust(restore.trust);
+      const last = restore.hints[restore.hints.length - 1];
+      setBubble(last ? last.replace(/^힌트 \d+: /, "") : info.allyOpening);
+    } else {  // 새 층: 힌트만 초기화(신뢰도는 등반 내내 유지)
+      setUsed(0); setHints([]); setBubble(info.allyOpening);
+    }
     await go(info.entry, undefined, info.challengeId);
   }, [go]);
 
   // 새 등반: 시드 발급 → 1층
   const newClimb = useCallback(async () => {
     const c = await (await fetch("/api/redteam/climb")).json();
-    setSeed(c.seed);
+    setSeed(c.seed); setTrust(60);
     await loadFloor(c.seed, 1);
   }, [loadFloor]);
 
   const started = useRef(false);
-  useEffect(() => {  // ?new=1이면 새 등반, 아니면 저장된 등반 이어하기(없으면 새 등반)
+  useEffect(() => {  // ?new=1이면 새 등반, 아니면 저장된 등반 이어하기(신뢰도·힌트 복원)
     if (started.current) return;
     started.current = true;
     const wantNew = new URLSearchParams(window.location.search).get("new") === "1";
-    let save: { seed?: string; floor?: number } | null = null;
+    let save: { seed?: string; floor?: number; trust?: number; hints?: string[]; used?: number } | null = null;
     try { const raw = localStorage.getItem(RT_SAVE_KEY); if (raw) save = JSON.parse(raw); } catch { save = null; }
     if (!wantNew && save && typeof save.seed === "string" && typeof save.floor === "number") {
-      setSeed(save.seed); void loadFloor(save.seed, save.floor);
+      setSeed(save.seed);
+      void loadFloor(save.seed, save.floor, {
+        hints: Array.isArray(save.hints) ? save.hints : [],
+        used: typeof save.used === "number" ? save.used : 0,
+        trust: typeof save.trust === "number" ? save.trust : 60,
+      });
     } else void newClimb();
   }, [loadFloor, newClimb]);
+
+  useEffect(() => {  // 진행 자동 저장(시드·층·신뢰도·힌트)
+    if (!info || !seed) return;
+    try { localStorage.setItem(RT_SAVE_KEY, JSON.stringify({ seed, floor: info.floor, trust, hints, used })); } catch { /* 무시 */ }
+  }, [seed, info, trust, hints, used]);
 
   function onViewportClick(e: React.MouseEvent) {
     const a = (e.target as HTMLElement).closest("a");
@@ -102,20 +121,20 @@ export default function RedTeam() {
     const d = await (await fetch(`/api/redteam/${cid}/hint`, {
       method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ level: lv }),
     })).json();
-    if (d.text) { setHints((h) => [...h, `힌트 ${lv}: ${d.text}`]); setUsed(lv); }
+    if (d.text) { setHints((h) => [...h, `힌트 ${lv}: ${d.text}`]); setBubble(d.text); setUsed(lv); setTrust((t) => Math.max(0, t - 1)); }
   }
   async function submitFlag() {
     const d = await (await fetch(`/api/redteam/${cid}/submit`, {
       method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ flag: flag.trim() }),
     })).json();
-    if (d.cleared) { setResult({ ok: true, text: `✅ 통과! — ${d.wrapUp}` }); setCleared(true); }
-    else { setResult({ ok: false, text: `❌ 틀렸습니다 — ${d.message || "실패"}` }); setWrong(true); setTimeout(() => setWrong(false), 500); }
+    if (d.cleared) { setResult({ ok: true, text: `✅ 통과! — ${d.wrapUp}` }); setCleared(true); setTrust((t) => Math.min(100, t + 2)); }
+    else { setResult({ ok: false, text: `❌ 틀렸습니다 — ${d.message || "실패"}` }); setWrong(true); setTimeout(() => setWrong(false), 500); setTrust((t) => Math.max(0, t - 5)); }
   }
 
   const isLast = info ? info.floor >= info.floors : false;
-  // 스프라이트 상태: 정답(통과)·오답에 반응
+  // 플레이어는 정답/오답 반응, 라온은 신뢰도 구간
   const playerState = result?.ok ? "win" : result && !result.ok ? "fail" : "idle";
-  const raonState = result?.ok ? "high" : result && !result.ok ? "low" : "mid";
+  const raonState = trust >= 80 ? "high" : trust >= 50 ? "mid" : "low";
   const src = resp
     ? resp.html + (resp.sourceComments.length ? "\n\n<!-- 주석 -->\n" + resp.sourceComments.map((c) => `<!-- ${c} -->`).join("\n") : "")
     : "";
@@ -124,7 +143,10 @@ export default function RedTeam() {
     <div className={`${styles.wrap} ${leaving ? styles.leaving : ""}`}>
       <header className={styles.top}>
         <Link href="/start" className={styles.back} onClick={(e) => { e.preventDefault(); nav("/start"); }}>← 직업 선택</Link>
-        <span className={styles.badge}>🗡️ 파훼자</span>
+        <div className={styles.topRight}>
+          <span className={styles.badge}>🗡️ 파훼자</span>
+          <button type="button" className={styles.home} onClick={() => nav("/lobby")} title="안전구역" aria-label="안전구역으로"><span className={styles.homeGlyph}>⌂</span></button>
+        </div>
       </header>
 
       <div className={styles.floorbar}>
@@ -139,10 +161,18 @@ export default function RedTeam() {
       <div className={styles.stage}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img className={styles.player} src={`/game/sprites/player_${playerState}.png`} alt="플레이어" />
-        <div className={styles.speech}><span className={styles.who}>라온</span>{info?.allyOpening ?? "…"}</div>
+        <div className={styles.speechCol}>
+          <div className={styles.speech}><span className={styles.who}>라온</span><Typewriter text={bubble} /></div>
+          <div className={styles.stageFoot}>
+            <div className={styles.trustMini}><span>신뢰도 <b>{trust}</b></span><div className={styles.tbar}><div className={styles.tfill} style={{ width: `${trust}%` }} /></div></div>
+            <button className={styles.hintBtn} onClick={getHint} disabled={!info || used >= info.hintCount}>힌트 요청 ({info ? info.hintCount - used : 0})</button>
+          </div>
+        </div>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img className={styles.raonSprite} src={`/game/sprites/raon_${raonState}.png`} alt="라온" />
       </div>
+
+      {hints.length > 0 && <div className={styles.hintCard}><span className={styles.hintCardTitle}>받은 힌트</span><div className={styles.hintLog}>{hints.map((hh, i) => <div key={i} className={styles.hintItem}>{hh}</div>)}</div></div>}
 
       <section className={styles.browser}>
         <div className={styles.chrome}>
@@ -165,14 +195,6 @@ export default function RedTeam() {
           <div className={styles.exploit}>⚡ 익스플로잇 성공 — 방어가 뚫렸습니다. 본문에서 FLAG를 찾으세요.</div>
         )}
         {showSrc && <pre className={styles.src}>{src}</pre>}
-      </section>
-
-      <section className={styles.panel}>
-        <div className={styles.bar}>
-          <b>라온에게 힌트 요청</b>
-          <button className={styles.btn} onClick={getHint}>힌트 ({info ? info.hintCount - used : 0} 남음)</button>
-        </div>
-        {hints.map((hh, i) => <div key={i} className={styles.hint}>{hh}</div>)}
       </section>
 
       <section className={`${styles.panel} ${wrong ? styles.shake : ""}`}>
