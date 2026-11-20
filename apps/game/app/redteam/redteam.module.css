@@ -7,8 +7,9 @@
 .back:hover { color: #a07bff; }
 .badge { font-size: 12px; color: #a07bff; border: 1px solid #352a4a; background: #1c1430; border-radius: 999px; padding: 3px 12px; }
 
-.floorbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.floorbar { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
 .floortag { font-size: 15px; font-weight: 600; }
+.status { font-size: 12px; color: #9aa3b2; border: 1px solid #2a2f3a; border-radius: 999px; padding: 2px 10px; }
 .of { color: #9aa3b2; font-weight: 400; font-size: 12px; }
 .progress { display: flex; gap: 5px; }
 .progress i { width: 22px; height: 6px; border-radius: 3px; display: block; }
