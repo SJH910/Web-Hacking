@@ -111,6 +111,12 @@ class RaonClient:
 
         return self._once(("hint", state.get("runId"), state.get("floor"), level), build)
 
+    def rephrase_hint(self, base_text, tier="mixed"):
+        """힌트 1건을 신뢰도 구간 톤으로 윤문(캐시 없음). 레드팀 등 단건 힌트용."""
+        user = (f"전하려는 힌트 내용: {base_text}\n"
+                f"신뢰도 상태: {tier}. {_TONE.get(tier, _TONE['mixed'])} 전달하되 정답을 직접 말하지 마라. 1문장.")
+        return self._chat(user)
+
 
 def decorate(client, obj):
     """state를 가진 응답에 라온 LLM 대사를 입힌다. 생성 실패분은 고정 대사를 유지한다.
@@ -137,4 +143,29 @@ def decorate(client, obj):
         if text:
             last["text"] = text
             last["source"] = "llm"
+    return obj
+
+
+def decorate_redteam(client, obj):
+    """레드팀 응답에 라온 LLM 대사를 입힌다(응답 형태가 블루팀과 달라 별도 처리).
+
+    - 챌린지 시작(floor_start): 최상위 allyOpening(의도적 틀린 첫마디)을 윤문.
+    - 힌트 응답: 최상위 text(단건 힌트)를 윤문. 실패 시 고정 대사 유지.
+    정답·flag·html 등 다른 필드는 건드리지 않는다.
+    """
+    if not client or not isinstance(obj, dict):
+        return obj
+    if obj.get("allyOpening"):
+        state = {"runId": obj.get("challengeId", "rt"), "floor": obj.get("floor", 1), "trust": 60,
+                 "problem": {"objective": obj.get("title", ""), "allyOpening": obj["allyOpening"]},
+                 "evidence": []}
+        text = client.opening(state)
+        if text:
+            obj["allyOpening"] = text
+            obj["allySource"] = "llm"
+    if isinstance(obj.get("text"), str) and obj.get("text"):
+        text = client.rephrase_hint(obj["text"])
+        if text:
+            obj["text"] = text
+            obj["source"] = "llm"
     return obj

@@ -79,6 +79,20 @@ class DecorateSuccess(unittest.TestCase):
     def tearDownClass(cls):
         cls.srv.shutdown()
 
+    def test_decorate_redteam(self):
+        c = raon_llm.RaonClient(self.port, "llama3", timeout=3)
+        # 챌린지 시작: allyOpening 윤문
+        o1 = raon_llm.decorate_redteam(c, {"challengeId": "c1", "floor": 1, "title": "열린 로비", "allyOpening": "원래 첫마디"})
+        self.assertEqual(o1["allyOpening"], "라온이 다시 건넨 한마디.")
+        self.assertEqual(o1["allySource"], "llm")
+        # 힌트 응답: text 윤문
+        o2 = raon_llm.decorate_redteam(c, {"text": "원래 힌트"})
+        self.assertEqual(o2["text"], "라온이 다시 건넨 한마디.")
+        self.assertEqual(o2["source"], "llm")
+        # 다른 응답(html 등)은 건드리지 않음
+        o3 = raon_llm.decorate_redteam(c, {"status": 200, "html": "<p>x</p>"})
+        self.assertNotIn("allySource", o3)
+
     def test_replaces_and_tags(self):
         c = raon_llm.RaonClient(self.port, "llama3", timeout=3)
         obj = {"state": _state(trust=85)}
