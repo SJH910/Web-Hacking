@@ -120,9 +120,9 @@ export default function Lobby() {
             <div className={styles.trustHead}><strong>신뢰도</strong><span>등반은 60에서 시작합니다</span></div>
             <div className={styles.gauge}><div className={styles.gaugeFill} style={{ width: "60%" }}><span>60</span></div></div>
             <div className={styles.trustBands}>
-              <span><b>≥ 80</b> 분명하고 구체적인 조언</span>
-              <span><b>50–79</b> 절반쯤 모호한 방향</span>
               <span><b>&lt; 50</b> 흐릿하고 서늘</span>
+              <span><b>50–79</b> 절반쯤 모호한 방향</span>
+              <span><b>≥ 80</b> 분명하고 구체적인 조언</span>
             </div>
           </div>
 

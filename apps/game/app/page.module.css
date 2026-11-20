@@ -200,6 +200,8 @@
 .gaugeFill { height: 100%; background: linear-gradient(90deg, #6a4dd0, var(--indigo)); display: flex; align-items: center; justify-content: flex-end; }
 .gaugeFill span { color: #fff; font-size: 10px; font-weight: 700; padding-right: 6px; }
 .trustBands { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; font-size: 11px; color: var(--muted); }
+.trustBands span:nth-child(2) { text-align: center; }
+.trustBands span:last-child { text-align: right; }
 .trustBands b { color: var(--violet); }
 .rules { display: grid; gap: 8px; margin: 12px 0; }
 .rule { background: var(--surface-soft); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: 13px; color: var(--ink); }
