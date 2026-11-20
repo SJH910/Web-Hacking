@@ -151,6 +151,7 @@ export default function RedTeam() {
 
       <div className={styles.floorbar}>
         <span className={styles.floortag}>⛰ 제 {info?.floor ?? "-"} 층</span>
+        <span className={styles.status}>{cleared ? "통과" : "침투 중"}</span>
       </div>
 
       <h1 className={styles.title}>{info ? `${info.title} — ${info.owasp}` : "등반 준비 중…"}</h1>
