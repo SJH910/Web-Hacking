@@ -87,7 +87,7 @@ type FloorState = {
 | night-log | 야간 접속 기록 | terminal | 쉬움 | A07·A09 | 취약 | 내 G2(브루트포스) ·[scenario-1](./scenario-1-record-archive.md) |
 | archive | 기록 보관소 | choice | 쉬움 | A01 | 정상(반복≠침입) | 프런트 scenarios.ts |
 | login | 유리문 로그인 | choice | 보통 | A01 | 취약/정상 | 프런트 scenarios.ts |
-| greenhouse | 제어실 온실 | choice | 보통 | A02 | — | 프런트 scenarios.ts |
+| greenhouse | 제어실 온실 | choice | 보통 | A02 | 정상(오래된 스냅샷≠현재) | 프런트 scenarios.ts |
 
 - **이름 충돌 해소:** 내 브루트포스 문제를 "기록 보관소" → **"야간 접속 기록"**으로 변경(프런트 archive와 구분).
 
@@ -125,7 +125,7 @@ type FloorState = {
 
 **풀 합계: 터미널 14 · 객관식 5 · 쉬움 6 · 보통 8 · 어려움 5 (총 19)**
 - 난이도 곡선 보강(어려움 1→5) → 후반 층(4~10 랜덤)이 싱겁지 않게.
-- 결론: 취약 다수 + 양호 2 + 정상 1 + 증거부족 1.
+- 결론: 취약 다수 + 양호 2 + 정상 2 + 증거부족 1.
 - OWASP **A01~A10 전 항목** 커버.
 
 > 난이도 곡선: **1~3층 쉬움 → 4~8층 랜덤 → 9~10층 어려움 가중**(§2 적용). 어려움 5개로 9~10층을 충분히 채움.
