@@ -4,8 +4,8 @@
 }
 .top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
 .back { color: #9aa3b2; text-decoration: none; font-size: 13px; }
-.back:hover { color: #ff6b6b; }
-.badge { font-size: 12px; color: #ff6b6b; border: 1px solid #40242a; background: #221519; border-radius: 999px; padding: 3px 12px; }
+.back:hover { color: #a07bff; }
+.badge { font-size: 12px; color: #a07bff; border: 1px solid #352a4a; background: #1c1430; border-radius: 999px; padding: 3px 12px; }
 
 .floorbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
 .floortag { font-size: 15px; font-weight: 600; }
@@ -13,7 +13,7 @@
 .progress { display: flex; gap: 5px; }
 .progress i { width: 22px; height: 6px; border-radius: 3px; display: block; }
 .pDone { background: #49d17d; }
-.pNow { background: #ff6b6b; }
+.pNow { background: #a07bff; }
 .pNext { background: #2a2f3a; }
 
 .title { font-size: 19px; margin: 0 0 4px; }
@@ -31,7 +31,7 @@
   border-radius: 10px; padding: 12px 14px; font-size: 14px; color: #e6e8ee;
   position: relative; margin-bottom: 18px;
 }
-.who { display: block; font-size: 11px; color: #ff9d9d; margin-bottom: 4px; font-weight: 700; }
+.who { display: block; font-size: 11px; color: #c3a3ff; margin-bottom: 4px; font-weight: 700; }
 @media (max-width: 560px) { .player, .raonSprite { height: 92px; } .speech { font-size: 13px; } }
 
 /* ---- 브라우저 창 ---- */
@@ -41,7 +41,7 @@
 .dots i { width: 10px; height: 10px; border-radius: 50%; background: #3a4150; display: block; }
 .addr { flex: 1; min-width: 120px; background: #0c0e14; border: 1px solid #2a2f3a; color: #cfe3ff; border-radius: 999px; padding: 6px 12px; font-family: ui-monospace, monospace; font-size: 13px; }
 .btn { background: #232938; color: #e6e8ee; border: 1px solid #2a2f3a; border-radius: 6px; padding: 6px 11px; cursor: pointer; font-size: 13px; }
-.btn:hover { border-color: #ff6b6b; }
+.btn:hover { border-color: #a07bff; }
 .statusbar { font-family: ui-monospace, monospace; font-size: 12px; color: #9aa3b2; padding: 6px 12px; background: #11141b; border-bottom: 1px solid #1f242e; }
 .ok { color: #49d17d; } .warn { color: #ffcf5a; }
 
@@ -70,15 +70,15 @@
 .panel { background: #171a22; border: 1px solid #262b36; border-radius: 10px; padding: 12px; margin-bottom: 12px; }
 .bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .flagInput { flex: 1; min-width: 180px; background: #0c0e14; border: 1px solid #262b36; color: #e6e8ee; border-radius: 6px; padding: 8px 10px; font-family: ui-monospace, monospace; }
-.primary { background: #ff6b6b; color: #1a0a0c; border: 1px solid #ff6b6b; border-radius: 6px; padding: 8px 14px; cursor: pointer; font-weight: 600; }
+.primary { background: #a07bff; color: #180a2a; border: 1px solid #a07bff; border-radius: 6px; padding: 8px 14px; cursor: pointer; font-weight: 600; }
 .primary:hover { filter: brightness(1.05); }
 .hint { color: #ffcf5a; margin-top: 6px; font-size: 13px; }
 .resultOk { color: #49d17d; margin-top: 8px; font-size: 13px; }
-.resultNo { color: #ff6b6b; margin-top: 8px; font-size: 13px; }
+.resultNo { color: #a07bff; margin-top: 8px; font-size: 13px; }
 .next { margin-top: 10px; background: #49d17d; color: #06160d; border: none; border-radius: 6px; padding: 9px 16px; cursor: pointer; font-weight: 700; font-size: 13px; }
 .next:hover { filter: brightness(1.05); }
 .summit { margin-top: 10px; color: #49d17d; font-weight: 600; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-.shake { animation: rtshake .4s both; border-color: #ff6b6b !important; box-shadow: 0 0 0 1px #ff6b6b inset; }
+.shake { animation: rtshake .4s both; border-color: #a07bff !important; box-shadow: 0 0 0 1px #a07bff inset; }
 @keyframes rtshake {
   0%, 100% { transform: translateX(0); }
   20% { transform: translateX(-7px); }
@@ -87,3 +87,7 @@
   80% { transform: translateX(3px); }
 }
 .note { color: #9aa3b2; font-size: 11px; margin-top: 14px; }
+
+.wrap { animation: rtIn .42s ease both; }
+@keyframes rtIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .wrap { animation: none; } }
