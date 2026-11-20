@@ -95,3 +95,28 @@
 
 .leaving { animation: fadeOut .36s ease forwards; pointer-events: none; }
 @keyframes fadeOut { to { opacity: 0; } }
+
+.topLeft { display: flex; align-items: center; gap: 10px; }
+.home { appearance: none; background: #232938; border: 1px solid #2a2f3a; color: #e6e8ee; border-radius: 8px; width: 32px; height: 32px; cursor: pointer; font-size: 17px; line-height: 1; display: grid; place-items: center; }
+.home:hover { border-color: #a07bff; color: #c3a3ff; }
+
+/* 통일 스테이지: 말풍선 하단 신뢰도·힌트 */
+.speechCol { flex: 1; align-self: stretch; display: flex; flex-direction: column; justify-content: center; gap: 8px; padding: 10px 0 12px; min-width: 0; }
+.speechCol .speech { flex: none; align-self: stretch; margin-bottom: 0; }
+.stageFoot { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.trustMini { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #9aa3b2; }
+.trustMini b { color: #e6e8ee; font-size: 14px; }
+.tbar { width: 120px; height: 8px; background: #2a2436; border-radius: 999px; overflow: hidden; }
+.tfill { height: 100%; background: linear-gradient(90deg, #6a4dd0, #a07bff); }
+.hintBtn { background: #232938; color: #e6e8ee; border: 1px solid #2a2f3a; border-radius: 6px; padding: 6px 12px; cursor: pointer; font-size: 12.5px; }
+.hintBtn:hover:not(:disabled) { border-color: #a07bff; }
+.hintBtn:disabled { opacity: .5; cursor: not-allowed; }
+.hintLog { display: grid; gap: 5px; }
+.hintItem { background: #1a1628; border: 1px solid #2a2436; border-radius: 8px; padding: 7px 10px; font-size: 12.5px; color: #ffcf5a; }
+
+/* 상단 우측 그룹 + 홈 아이콘 보정 + 힌트 우측 + 힌트 기록 카드 */
+.topRight { display: flex; align-items: center; gap: 10px; }
+.homeGlyph { display: block; transform: translateY(-2px); }
+.stageFoot { justify-content: space-between; }
+.hintCard { background: #15121d; border: 1px solid #262b36; border-radius: 12px; padding: 12px 14px; margin-bottom: 12px; }
+.hintCardTitle { display: block; font-size: 12px; color: #9aa3b2; margin-bottom: 8px; font-weight: 700; }

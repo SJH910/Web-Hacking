@@ -3,7 +3,6 @@
 // 직업 선택. 각 직업마다 "새 등반 / 이어하기"를 고른다.
 //  · 수호자 → /play (블루팀) · 파훼자 → /redteam (레드팀)
 //  · 새 등반 = ?new=1, 이어하기 = 저장된 등반 복귀(저장 없으면 비활성)
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import styles from "./start.module.css";
 import { useFadeNav } from "../use-fade-nav";
@@ -24,7 +23,8 @@ export default function Start() {
   return (
     <div className={`${styles.wrap} ${leaving ? styles.leaving : ""}`}>
       <header className={styles.top}>
-        <Link href="/lobby" className={styles.back} onClick={(e) => { e.preventDefault(); nav("/lobby"); }}>← 안전구역</Link>
+        <span />
+        <button type="button" className={styles.home} onClick={() => nav("/lobby")} title="안전구역" aria-label="안전구역으로"><span className={styles.homeGlyph}>⌂</span></button>
       </header>
 
       <h1 className={styles.title}>직업 선택</h1>

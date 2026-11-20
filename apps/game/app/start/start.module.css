@@ -57,3 +57,9 @@
 .resumeBtn:disabled { color: var(--muted); cursor: not-allowed; opacity: .55; }
 /* 카드 전체 호버 전환은 유지하되 클릭은 버튼에서 처리 */
 .card { cursor: default; }
+
+/* 홈 아이콘 버튼 */
+.top { display: flex; align-items: center; justify-content: space-between; }
+.home { appearance: none; background: #15121d; border: 1px solid #2a2436; color: var(--ink); border-radius: 8px; width: 34px; height: 34px; cursor: pointer; font-size: 18px; line-height: 1; display: grid; place-items: center; }
+.home:hover { border-color: #a07bff; color: #c3a3ff; }
+.homeGlyph { display: block; transform: translateY(-2px); }
