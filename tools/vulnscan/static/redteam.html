@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>용범의 탑 — 레드팀 모드 (슬라이스)</title>
+<style>
+  :root{ --bg:#0f1117; --panel:#171a22; --line:#262b36; --fg:#e6e8ee; --mut:#9aa3b2;
+         --accent:#5aa9ff; --ok:#49d17d; --warn:#ffcf5a; --bad:#ff6b6b; }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.6 system-ui,-apple-system,"Apple SD Gothic Neo",sans-serif;padding:16px}
+  .wrap{max-width:860px;margin:0 auto}
+  h1{font-size:18px;margin:0 0 4px}
+  .sub{color:var(--mut);font-size:12px;margin-bottom:14px}
+  .raon{background:#1b2030;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:8px;padding:10px 12px;margin-bottom:14px}
+  .raon b{color:var(--accent)}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px}
+  .bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .cookie{color:var(--mut);font-size:12px;font-family:ui-monospace,monospace}
+  input[type=text]{flex:1;min-width:180px;background:#0c0e14;border:1px solid var(--line);color:var(--fg);border-radius:6px;padding:8px 10px;font-family:ui-monospace,monospace}
+  button{background:#232938;color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:8px 12px;cursor:pointer;font-size:13px}
+  button:hover{border-color:var(--accent)}
+  button.primary{background:var(--accent);color:#06101f;border-color:var(--accent);font-weight:600}
+  .meta{font-size:12px;color:var(--mut);margin:8px 0 4px;font-family:ui-monospace,monospace}
+  .status200{color:var(--ok)} .status404,.status400{color:var(--warn)}
+  .render{background:#0c0e14;border:1px solid var(--line);border-radius:6px;padding:12px;min-height:60px}
+  .render a{color:var(--accent)}
+  .src{white-space:pre-wrap;font-family:ui-monospace,monospace;font-size:12px;color:#c7d0e0;background:#0c0e14;border:1px dashed var(--line);border-radius:6px;padding:10px;margin-top:8px;display:none}
+  .banner{border-radius:8px;padding:10px 12px;margin-top:10px;display:none;font-size:13px}
+  .banner.exploit{display:block;background:#15291c;border:1px solid var(--ok);color:var(--ok)}
+  .hints{font-size:13px}
+  .hint{color:var(--warn);margin-top:6px}
+  .flagrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+  .result{margin-top:8px;font-size:13px}
+  .result.ok{color:var(--ok)} .result.no{color:var(--bad)}
+  .quick{margin-top:6px}
+  .quick button{font-size:12px;padding:5px 9px;font-family:ui-monospace,monospace}
+  .note{color:var(--mut);font-size:11px;margin-top:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1 id="title">용범의 탑 — 레드팀 모드</h1>
+  <div class="sub" id="sub">수직 슬라이스 · 합성·결정적 · 실제 요청 없음</div>
+
+  <div class="raon">🗣️ 라온 — <b id="raon">…</b></div>
+
+  <div class="panel">
+    <div class="bar">
+      <span class="cookie" id="cookie"></span>
+    </div>
+    <div class="bar" style="margin-top:8px">
+      <input id="url" type="text" placeholder="/inbox" value="/inbox">
+      <button class="primary" onclick="go()">이동</button>
+      <button onclick="toggleSrc()">소스 보기</button>
+    </div>
+    <div class="quick">
+      <button onclick="set('/inbox')">/inbox</button>
+      <button onclick="set('/note?id=18')">/note?id=18</button>
+      <button onclick="set('/robots.txt')">/robots.txt</button>
+    </div>
+    <div class="meta" id="meta"></div>
+    <div class="render" id="render">왼쪽 주소창에 경로를 넣고 <b>이동</b>을 눌러 탐색하세요.</div>
+    <pre class="src" id="src"></pre>
+    <div class="banner exploit" id="exploit">⚡ 익스플로잇 성공 — 소유자가 당신이 아닌 자원에 접근했습니다. 본문에서 FLAG를 찾으세요.</div>
+  </div>
+
+  <div class="panel hints">
+    <div class="bar">
+      <b>라온에게 힌트 요청</b>
+      <button onclick="getHint()">힌트 (<span id="hleft">3</span> 남음)</button>
+    </div>
+    <div id="hintbox"></div>
+  </div>
+
+  <div class="panel">
+    <b>FLAG 제출</b>
+    <div class="flagrow">
+      <input id="flag" type="text" placeholder="FLAG{...}">
+      <button class="primary" onclick="submitFlag()">제출</button>
+    </div>
+    <div class="result" id="result"></div>
+  </div>
+
+  <div class="note">학습용 가상 환경. 모든 데이터·세션은 합성이며 실제 네트워크 요청을 보내지 않습니다.</div>
+</div>
+
+<script>
+const CID = "c1";
+let used = 0, maxHints = 3, lastComments = [];
+
+async function api(path, method="POST", body=null){
+  const opt = {method, headers:{"Content-Type":"application/json"}};
+  if(body) opt.body = JSON.stringify(body);
+  const r = await fetch(`/api/redteam/${CID}/${path}`, opt);
+  return r.json();
+}
+
+async function start(){
+  const s = await (await fetch(`/api/redteam/${CID}/start`)).json();
+  document.getElementById("title").textContent = `${s.title} — ${s.owasp}`;
+  document.getElementById("sub").textContent = `난이도 ${s.difficulty} · 티어 ${s.tier} · 합성·결정적`;
+  document.getElementById("raon").textContent = s.allyOpening;
+  document.getElementById("cookie").textContent = `세션: ${s.session.user} · Cookie: ${s.session.cookies}`;
+  maxHints = s.hintCount; document.getElementById("hleft").textContent = maxHints;
+}
+
+function set(p){ document.getElementById("url").value = p; go(); }
+
+async function go(){
+  const path = document.getElementById("url").value.trim();
+  const d = await api("visit", "POST", {path});
+  const meta = document.getElementById("meta");
+  const cls = "status"+(d.status||"");
+  meta.innerHTML = `HTTP <span class="${cls}">${d.status}</span>` + (d.owner?` · 소유자: <b>${d.owner}</b>`:"");
+  document.getElementById("render").innerHTML = d.html || "(빈 응답)";
+  lastComments = d.sourceComments || [];
+  const src = document.getElementById("src");
+  src.textContent = (d.html||"") + (lastComments.length?`\n\n<!-- 주석 -->\n`+lastComments.map(c=>"<!-- "+c+" -->").join("\n"):"");
+  document.getElementById("exploit").style.display = d.exploited ? "block" : "none";
+  if(d.flagRevealed){ document.getElementById("flag").focus(); }
+}
+
+function toggleSrc(){
+  const s = document.getElementById("src");
+  s.style.display = s.style.display==="block" ? "none" : "block";
+}
+
+async function getHint(){
+  if(used >= maxHints){ return; }
+  used++;
+  const d = await api("hint","POST",{level:used});
+  if(d.text){
+    const el = document.createElement("div"); el.className="hint";
+    el.textContent = `힌트 ${used}: ${d.text}`;
+    document.getElementById("hintbox").appendChild(el);
+    document.getElementById("hleft").textContent = maxHints - used;
+  }
+}
+
+async function submitFlag(){
+  const flag = document.getElementById("flag").value.trim();
+  const d = await api("submit","POST",{flag});
+  const r = document.getElementById("result");
+  if(d.cleared){
+    r.className = "result ok";
+    r.innerHTML = `✅ 통과! <br><b>마무리:</b> ${d.wrapUp}`;
+  } else {
+    r.className = "result no";
+    r.textContent = "❌ " + (d.message || "실패");
+  }
+}
+
+start();
+</script>
+</body>
+</html>

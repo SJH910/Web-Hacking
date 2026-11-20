@@ -1,0 +1,89 @@
+.wrap {
+  max-width: 880px; margin: 0 auto; padding: 24px 16px 48px;
+  color: #e6e8ee; font: 14px/1.6 system-ui, -apple-system, "Apple SD Gothic Neo", sans-serif;
+}
+.top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.back { color: #9aa3b2; text-decoration: none; font-size: 13px; }
+.back:hover { color: #ff6b6b; }
+.badge { font-size: 12px; color: #ff6b6b; border: 1px solid #40242a; background: #221519; border-radius: 999px; padding: 3px 12px; }
+
+.floorbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.floortag { font-size: 15px; font-weight: 600; }
+.of { color: #9aa3b2; font-weight: 400; font-size: 12px; }
+.progress { display: flex; gap: 5px; }
+.progress i { width: 22px; height: 6px; border-radius: 3px; display: block; }
+.pDone { background: #49d17d; }
+.pNow { background: #ff6b6b; }
+.pNext { background: #2a2f3a; }
+
+.title { font-size: 19px; margin: 0 0 4px; }
+.sub { color: #9aa3b2; font-size: 12px; margin: 0 0 14px; }
+/* ---- 캐릭터 스테이지(2등신 도트 스프라이트) ---- */
+.stage {
+  display: flex; align-items: flex-end; gap: 10px; margin-bottom: 14px;
+  background: linear-gradient(180deg, #14171f 0%, #1b1420 100%);
+  border: 1px solid #262b36; border-radius: 12px; padding: 12px 14px 0;
+  min-height: 140px; position: relative; overflow: hidden;
+}
+.player, .raonSprite { height: 128px; width: auto; image-rendering: pixelated; flex: 0 0 auto; }
+.speech {
+  flex: 1; align-self: center; background: #0f1218; border: 1px solid #2a2f3a;
+  border-radius: 10px; padding: 12px 14px; font-size: 14px; color: #e6e8ee;
+  position: relative; margin-bottom: 18px;
+}
+.who { display: block; font-size: 11px; color: #ff9d9d; margin-bottom: 4px; font-weight: 700; }
+@media (max-width: 560px) { .player, .raonSprite { height: 92px; } .speech { font-size: 13px; } }
+
+/* ---- 브라우저 창 ---- */
+.browser { background: #0c0e14; border: 1px solid #2a2f3a; border-radius: 12px; overflow: hidden; margin-bottom: 12px; }
+.chrome { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: #1a1e27; border-bottom: 1px solid #2a2f3a; }
+.dots { display: flex; gap: 5px; }
+.dots i { width: 10px; height: 10px; border-radius: 50%; background: #3a4150; display: block; }
+.addr { flex: 1; min-width: 120px; background: #0c0e14; border: 1px solid #2a2f3a; color: #cfe3ff; border-radius: 999px; padding: 6px 12px; font-family: ui-monospace, monospace; font-size: 13px; }
+.btn { background: #232938; color: #e6e8ee; border: 1px solid #2a2f3a; border-radius: 6px; padding: 6px 11px; cursor: pointer; font-size: 13px; }
+.btn:hover { border-color: #ff6b6b; }
+.statusbar { font-family: ui-monospace, monospace; font-size: 12px; color: #9aa3b2; padding: 6px 12px; background: #11141b; border-bottom: 1px solid #1f242e; }
+.ok { color: #49d17d; } .warn { color: #ffcf5a; }
+
+/* ---- 가상 사이트 뷰포트 (라이트 테마: 실제 웹페이지처럼) ---- */
+.viewport { background: #f7f8fa; color: #1a1d24; padding: 20px; min-height: 160px; }
+.viewport :global(h2) { font-size: 18px; margin: 0 0 14px; color: #11151c; }
+.viewport :global(p) { margin: 8px 0; }
+.viewport :global(ul.rt-list) { list-style: none; padding: 0; margin: 10px 0; }
+.viewport :global(ul.rt-list li) { padding: 10px 12px; border: 1px solid #e3e6ec; border-radius: 8px; margin-bottom: 8px; background: #fff; }
+.viewport :global(a) { color: #1a5fb4; text-decoration: none; font-weight: 600; }
+.viewport :global(a:hover) { text-decoration: underline; }
+.viewport :global(form) { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 12px 0; }
+.viewport :global(input) { background: #fff; border: 1px solid #c7ccd6; border-radius: 6px; padding: 8px 10px; color: #1a1d24; min-width: 160px; }
+.viewport :global(button) { background: #1a5fb4; color: #fff; border: none; border-radius: 6px; padding: 8px 14px; cursor: pointer; font-weight: 600; }
+.viewport :global(button:hover) { background: #164e95; }
+.viewport :global(pre) { background: #eef0f4; border-radius: 6px; padding: 10px; overflow: auto; font-size: 12px; }
+.viewport :global(.rt-muted) { color: #6b7280; font-size: 13px; }
+.viewport :global(.rt-owner) { color: #9333ea; font-size: 12px; margin: 2px 0 10px; }
+.viewport :global(.rt-reflect) { background: #fff; border: 1px dashed #c7ccd6; border-radius: 8px; padding: 12px; margin-top: 12px; }
+.viewport :global(.rt-alert) { background: #fdecef; border: 1px solid #f3a0ae; color: #b01b38; border-radius: 8px; padding: 12px; margin-top: 12px; font-weight: 500; }
+.viewport :global(.rt-error) { background: #fff7e6; border: 1px solid #f0d089; color: #9a6b00; border-radius: 8px; padding: 10px 12px; margin-top: 12px; font-family: ui-monospace, monospace; font-size: 13px; }
+
+.exploit { background: #15291c; border-top: 1px solid #49d17d; color: #49d17d; padding: 10px 14px; font-size: 13px; }
+.src { white-space: pre-wrap; font-family: ui-monospace, monospace; font-size: 12px; color: #c7d0e0; background: #0c0e14; border-top: 1px dashed #2a2f3a; padding: 12px; margin: 0; }
+
+.panel { background: #171a22; border: 1px solid #262b36; border-radius: 10px; padding: 12px; margin-bottom: 12px; }
+.bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.flagInput { flex: 1; min-width: 180px; background: #0c0e14; border: 1px solid #262b36; color: #e6e8ee; border-radius: 6px; padding: 8px 10px; font-family: ui-monospace, monospace; }
+.primary { background: #ff6b6b; color: #1a0a0c; border: 1px solid #ff6b6b; border-radius: 6px; padding: 8px 14px; cursor: pointer; font-weight: 600; }
+.primary:hover { filter: brightness(1.05); }
+.hint { color: #ffcf5a; margin-top: 6px; font-size: 13px; }
+.resultOk { color: #49d17d; margin-top: 8px; font-size: 13px; }
+.resultNo { color: #ff6b6b; margin-top: 8px; font-size: 13px; }
+.next { margin-top: 10px; background: #49d17d; color: #06160d; border: none; border-radius: 6px; padding: 9px 16px; cursor: pointer; font-weight: 700; font-size: 13px; }
+.next:hover { filter: brightness(1.05); }
+.summit { margin-top: 10px; color: #49d17d; font-weight: 600; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.shake { animation: rtshake .4s both; border-color: #ff6b6b !important; box-shadow: 0 0 0 1px #ff6b6b inset; }
+@keyframes rtshake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-7px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(3px); }
+}
+.note { color: #9aa3b2; font-size: 11px; margin-top: 14px; }
