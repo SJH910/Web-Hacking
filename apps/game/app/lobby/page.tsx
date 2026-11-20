@@ -2,26 +2,39 @@
 
 // 용범의 탑 — 안전구역(로비). 타이틀(/)에서 "게임 시작"으로 진입하는 허브.
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import styles from "../page.module.css";
+import { useFadeNav } from "../use-fade-nav";
+import { ALL_BADGES, ALL_ENDINGS, readCollection, type Collection } from "../collection";
 
 const RAON_GREETING =
   "여기선 안전해. 숨 고르고, 준비되면 등반을 시작하자. — 아, 내 조언이 늘 맞는 건 아니니 꼭 증거로 확인하고.";
 
-export default function Lobby() {
-  const [tab, setTab] = useState<"lobby" | "record" | "companion">("lobby");
+type Rank = { rank: number; name: string; floor: number; score: number; trust: number; hints: number };
 
-  return <div className={styles.shell}>
+export default function Lobby() {
+  const [tab, setTab] = useState<"lobby" | "record" | "ranking" | "companion">("lobby");
+  const [ranks, setRanks] = useState<Rank[] | null>(null);
+  const [col, setCol] = useState<Collection>({ endings: [], badges: [] });
+  const { leaving, nav } = useFadeNav();
+
+  useEffect(() => {
+    fetch("/api/game/rankings").then((r) => r.json()).then((d) => setRanks(Array.isArray(d) ? d : [])).catch(() => setRanks([]));
+    setCol(readCollection());
+  }, []);
+
+  return <div className={`${styles.shell} ${leaving ? styles.leaving : ""}`}>
     <a className={styles.skip} href="#lobby">안전구역으로 건너뛰기</a>
     <header className={styles.header}><div className={styles.headerInner}>
       <Link className={styles.brand} href="/"><span className={styles.sigil} aria-hidden="true">♜</span>용범의 탑<span className={styles.brandSub}>THE TOWER</span></Link>
       <nav className={styles.nav} aria-label="주 메뉴">
-        <Link href="/start">등반 시작</Link>
+        <Link href="/start" onClick={(e) => { e.preventDefault(); nav("/start"); }}>등반 시작</Link>
         <button type="button" className={styles.navTab} aria-current={tab === "lobby" ? "page" : undefined} onClick={() => setTab("lobby")}>안전구역</button>
         <button type="button" className={styles.navTab} aria-current={tab === "record" ? "page" : undefined} onClick={() => setTab("record")}>기록</button>
+        <button type="button" className={styles.navTab} aria-current={tab === "ranking" ? "page" : undefined} onClick={() => setTab("ranking")}>랭킹</button>
         <button type="button" className={styles.navTab} aria-current={tab === "companion" ? "page" : undefined} onClick={() => setTab("companion")}>동료</button>
       </nav>
-      <span className={styles.floorBadge}>◇ 안전구역</span><Link className={styles.introLink} href="/">타이틀 ↩</Link>
+      <span className={styles.floorBadge}>◇ 안전구역</span><Link className={styles.introLink} href="/" onClick={(e) => { e.preventDefault(); nav("/"); }}>타이틀 ↩</Link>
     </div></header>
 
     <main className={styles.main} id="lobby">
@@ -43,7 +56,7 @@ export default function Lobby() {
         {tab === "lobby" && <>
           <section className={styles.cta} aria-labelledby="cta-title">
             <div><span className={styles.eyebrow}>START CLIMB</span><h2 id="cta-title">등반을 시작하시겠어요?</h2><p>직업을 선택하면 그 방식으로 각 층의 관문이 출제됩니다.</p></div>
-            <Link className={styles.ctaBtn} href="/start">등반 시작 →</Link>
+            <Link className={styles.ctaBtn} href="/start" onClick={(e) => { e.preventDefault(); nav("/start"); }}>등반 시작 →</Link>
           </section>
 
           <section className={styles.panel} aria-labelledby="about-title">
@@ -59,13 +72,40 @@ export default function Lobby() {
         </>}
 
         {tab === "record" && <section className={styles.panel} aria-labelledby="record-title">
-          <div className={styles.panelHeading}><div><span className={styles.eyebrow}>RECORD</span><h2 id="record-title">등반 기록</h2></div><span className={styles.muted}>세이브·랭킹</span></div>
-          <div className={styles.recordEmpty}>
-            <span className={styles.recordIcon} aria-hidden="true">⌔</span>
-            <h3>아직 등반 기록이 없습니다</h3>
-            <p>직업을 골라 첫 등반을 시작하세요.<br />오른 층·획득한 FLAG·랭킹은 등반 중에 기록됩니다.</p>
-            <Link className={styles.ctaBtn} href="/start">등반 시작 →</Link>
+          <div className={styles.panelHeading}><div><span className={styles.eyebrow}>MY RECORD</span><h2 id="record-title">내 기록</h2></div><span className={styles.muted}>본인 수집 · 로컬 저장</span></div>
+          <div className={styles.collectBody}>
+            <div className={styles.collectHead}><strong>본 엔딩</strong><span>{col.endings.length} / {ALL_ENDINGS.length}</span></div>
+            <div className={styles.endGrid}>
+              {ALL_ENDINGS.map((e) => {
+                const seen = col.endings.includes(e);
+                return <div key={e} className={`${styles.endCard} ${seen ? styles.seen : styles.locked}`}><span className={styles.endMark}>{seen ? "★" : "☆"}</span><strong>{seen ? e : "？ ？ ？"}</strong></div>;
+              })}
+            </div>
+
+            <div className={styles.collectHead}><strong>수집한 칭호</strong><span>{col.badges.length} / {ALL_BADGES.length}</span></div>
+            <div className={styles.badgeRow}>
+              {ALL_BADGES.map((b) => {
+                const has = col.badges.includes(b);
+                return <span key={b} className={`${styles.badgeChip} ${has ? styles.badgeHas : styles.badgeLocked}`}>✦ {has ? b : "？？？"}</span>;
+              })}
+            </div>
+
+            {col.endings.length === 0 && col.badges.length === 0 &&
+              <p className={styles.companionFoot}>아직 완주 기록이 없습니다. 등반을 끝까지 올라 엔딩을 보면 여기에 모입니다.</p>}
+            <div className={styles.recordCta}><Link className={styles.ctaBtn} href="/start" onClick={(e) => { e.preventDefault(); nav("/start"); }}>등반 시작 →</Link></div>
           </div>
+        </section>}
+
+        {tab === "ranking" && <section className={styles.panel} aria-labelledby="ranking-title">
+          <div className={styles.panelHeading}><div><span className={styles.eyebrow}>RANKING</span><h2 id="ranking-title">랭킹</h2></div><span className={styles.muted}>로컬 서버 기준</span></div>
+          {ranks === null
+            ? <div className={styles.recordEmpty}><span className={styles.recordIcon} aria-hidden="true">…</span><p>불러오는 중…</p></div>
+            : ranks.length === 0
+              ? <div className={styles.recordEmpty}><span className={styles.recordIcon} aria-hidden="true">♛</span><h3>아직 랭킹이 없습니다</h3><p>모든 층을 통과하고 랭킹에 등록하면 여기에 표시됩니다.</p></div>
+              : <ol className={styles.rankList}>{ranks.map((r) => (
+                  <li key={r.rank}><span className={styles.rankNo}>{r.rank}</span><span className={styles.rankName}>{r.name}</span><span className={styles.rankMeta}>{r.floor}층 · {r.score}점 · 신뢰 {r.trust}</span></li>
+                ))}</ol>}
+          <p className={styles.companionFoot}>✧ 로컬 전용입니다. 공용 서버에 배포하면 이 서버에 접속한 여러 플레이어의 랭킹이 함께 모입니다.</p>
         </section>}
 
         {tab === "companion" && <section className={styles.companion} aria-labelledby="companion-title">
@@ -75,17 +115,23 @@ export default function Lobby() {
             <div><h2 id="companion-title">라온</h2><p>기억이 흐릿한 당신의 길잡이</p></div><span className={styles.tag}>동료</span>
           </div>
           <blockquote>나는 길을 안내하지만 완벽하진 않아. 가끔 틀린 말을 하니, 늘 증거로 확인해 줘.</blockquote>
-          <div className={styles.opinionLabel}><strong>신뢰도에 따라 달라집니다</strong><span>표정·조언 품질</span></div>
-          <div className={styles.trustRow}>
-            {([["high", "신뢰 높음", "다정하고 분명한 조언"], ["mid", "보통", "절반쯤 모호한 방향"], ["low", "신뢰 낮음", "서늘하고 흐릿"]] as const).map(([k, label, desc]) => (
-              <div className={styles.trustCard} key={k}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={`/game/sprites/raon_${k}.png`} alt={label} />
-                <strong>{label}</strong><small>{desc}</small>
-              </div>
-            ))}
+
+          <div className={styles.trustBox}>
+            <div className={styles.trustHead}><strong>신뢰도</strong><span>등반은 60에서 시작합니다</span></div>
+            <div className={styles.gauge}><div className={styles.gaugeFill} style={{ width: "60%" }}><span>60</span></div></div>
+            <div className={styles.trustBands}>
+              <span><b>≥ 80</b> 분명하고 구체적인 조언</span>
+              <span><b>50–79</b> 절반쯤 모호한 방향</span>
+              <span><b>&lt; 50</b> 흐릿하고 서늘</span>
+            </div>
           </div>
-          <p className={styles.companionFoot}>✧ 라온의 말을 따를지, 증거로 반박할지에 따라 신뢰도가 변합니다.</p>
+
+          <div className={styles.rules}>
+            <div className={styles.rule}><span className={styles.up}>▲</span> 라온을 의심하고 <b>증거로 반박해 성공</b>하면 신뢰도 상승</div>
+            <div className={styles.rule}><span className={styles.down}>▼</span> 라온의 (틀린) 말을 <b>따라 실수</b>하면 하락 · 힌트 사용 시 소폭 하락</div>
+          </div>
+
+          <p className={styles.companionFoot}>✧ 신뢰도는 <b>등정 결말(엔딩)</b>을 가릅니다. 라온을 믿되, 증거로 확인하세요.</p>
         </section>}
       </div>
 
