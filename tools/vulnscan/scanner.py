@@ -19,6 +19,8 @@ from pathlib import Path
 from urllib.parse import unquote, urljoin, urlparse
 
 import checks
+import raon_llm
+import redteam
 from game_engine import GAMES
 from game_store import Store
 from llm_review import review_one_a05
@@ -232,6 +234,9 @@ class Handler(BaseHTTPRequestHandler):
             return
         if path.startswith("/game/"):
             return self._serve_game(path)
+        if path in ("/redteam", "/redteam/"):
+            f = STATIC / "redteam.html"
+            return self._send(200, f.read_bytes(), "text/html; charset=utf-8")
         if path in ("/", "/index.html"):
             f = STATIC / "index.html"
             return self._send(200, f.read_bytes(), "text/html; charset=utf-8")
@@ -239,7 +244,25 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(200, json.dumps({"excludes": DEFAULT_EXCLUDES}))
         if path.startswith("/api/game/"):
             return self._game_api("GET", path)
+        if path.startswith("/api/redteam/"):
+            return self._redteam_api("GET", path)
         return self._send(404, json.dumps({"error": "not found"}))
+
+    def _redteam_api(self, method, path):
+        body = {}
+        if method == "POST":
+            try:
+                n = int(self.headers.get("Content-Length", 0))
+                if not 0 <= n <= 8192:
+                    return self._send(413, '{"error": "요청이 너무 큽니다."}')
+                body = json.loads(self.rfile.read(n) or b"{}")
+                if not isinstance(body, dict):
+                    raise ValueError
+            except (ValueError, TypeError):
+                return self._send(400, '{"error": "잘못된 요청입니다."}')
+        parts = [unquote(p) for p in path[len("/api/redteam/"):].split("/") if p]
+        status, obj = redteam.handle(method, parts, body)
+        self._send(status, json.dumps(obj, ensure_ascii=False))
 
     def _game_api(self, method, path):
         body = {}
@@ -255,12 +278,17 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(400, '{"error": "잘못된 요청입니다."}')
         parts = [unquote(p) for p in path[len("/api/game/"):].split("/") if p]
         status, obj = GAMES.handle(method, parts, body, self.client_address[0])
+        raon = getattr(self.server, "game_raon", None)
+        if status == 200 and raon is not None:
+            obj = raon_llm.decorate(raon, obj)
         self._send(status, json.dumps(obj, ensure_ascii=False))
 
     def do_POST(self):
         path = urlparse(self.path).path
         if path.startswith("/api/game/"):
             return self._game_api("POST", path)
+        if path.startswith("/api/redteam/"):
+            return self._redteam_api("POST", path)
         if path not in ("/api/scan", "/api/probe"):
             return self._send(404, json.dumps({"error": "not found"}))
         try:
@@ -298,12 +326,21 @@ def main():
     ap.add_argument("--host", default="127.0.0.1")  # 대시보드도 로컬에만 바인딩
     ap.add_argument("--llm-port", type=int, help="로컬 LLM API 포트 (A05 한 건 분석)")
     ap.add_argument("--game-db", default=str(Path(__file__).parent / "data" / "game.db"), help="게임 등반·랭킹 SQLite 파일")
+    ap.add_argument("--game-llm-port", type=int,
+                    help="게임 라온 LLM 포트 (OpenAI 호환 로컬. Ollama=11434). 없으면 고정 대사만 사용")
+    ap.add_argument("--game-llm-model", default="llama3",
+                    help="게임 라온 모델명 (Ollama=llama3·qwen2.5 등, 자체=local-gpt2)")
     args = ap.parse_args()
     if args.llm_port is not None and not 1 <= args.llm_port <= 65535:
         ap.error("--llm-port must be between 1 and 65535")
+    if args.game_llm_port is not None and not 1 <= args.game_llm_port <= 65535:
+        ap.error("--game-llm-port must be between 1 and 65535")
     GAMES.store = Store(args.game_db)
     srv = ThreadingHTTPServer((args.host, args.port), Handler)
     srv.llm_port = args.llm_port
+    srv.game_raon = raon_llm.RaonClient(args.game_llm_port, args.game_llm_model) if args.game_llm_port else None
+    if srv.game_raon:
+        print(f"라온 LLM: 127.0.0.1:{args.game_llm_port} · 모델 {args.game_llm_model} (실패 시 고정 대사 폴백)")
     print(f"대시보드: http://{args.host}:{args.port}  (학습용·로컬 전용. Ctrl+C 종료)")
     try:
         srv.serve_forever()

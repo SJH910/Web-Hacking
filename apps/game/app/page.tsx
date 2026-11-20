@@ -54,7 +54,7 @@ export default function Home() {
     <a className={styles.skip} href="#analysis">관문 분석으로 건너뛰기</a>
     <header className={styles.header}><div className={styles.headerInner}>
       <Link className={styles.brand} href="/"><span className={styles.sigil} aria-hidden="true">♜</span>용범의 탑<span className={styles.brandSub}>THE TOWER</span></Link>
-      <nav className={styles.nav} aria-label="주 메뉴"><Link href="/play">등반 시작</Link><a href="#tower">층 탐험</a><a href="#analysis" aria-current="page">관문 분석</a><a href="#evidence">증거 기록</a><a href="#companion">AI 동료</a></nav>
+      <nav className={styles.nav} aria-label="주 메뉴"><Link href="/start">등반 시작</Link><a href="#tower">층 탐험</a><a href="#analysis" aria-current="page">관문 분석</a><a href="#evidence">증거 기록</a><a href="#companion">AI 동료</a></nav>
       <span className={styles.floorBadge}>◇ 제3층</span><Link className={styles.introLink} href="/intro">인트로 ↗</Link>
     </div></header>
     <main className={styles.main}>
