@@ -3,9 +3,12 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { gameRequest, isRanks, readSave, request, SAVE_KEY, type Game, type Rank } from "./game-api";
 import { Companion, Investigation, Judgment, Rankings } from "./play-panels";
+import { recordEnding } from "../collection";
+import { useFadeNav } from "../use-fade-nav";
 import s from "./play.module.css";
 
 export default function Play() {
+  const { leaving, nav } = useFadeNav();
   const [game, setGame] = useState<Game | null>(null);
   const [saved, setSaved] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -23,6 +26,17 @@ export default function Play() {
     catch { setStorageNote("이 브라우저에서는 자동 저장을 사용할 수 없습니다."); }
   }, []);
   useEffect(() => { if (game) heading.current?.focus(); }, [game?.floor, game?.runId]); // 층 전환 시 맥락 안내
+  useEffect(() => { if (game?.ending) recordEnding(game.ending.title, game.ending.badges); }, [game?.ending]); // 본 엔딩·칭호 수집
+  const started = useRef(false);
+  useEffect(() => {  // 바로 문제 진입: ?new=1이면 새 등반, 아니면 저장 기록 이어하기(없으면 새 등반)
+    if (started.current) return;
+    started.current = true;
+    const wantNew = new URLSearchParams(window.location.search).get("new") === "1";
+    let savedRun: string | null = null;
+    try { savedRun = readSave(localStorage.getItem(SAVE_KEY)); } catch { savedRun = null; }
+    if (!wantNew && savedRun) void load(`runs/${encodeURIComponent(savedRun)}`);
+    else void load("runs", { requestId: crypto.randomUUID() });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function load(path: string, body?: object) {
     if (lock.current) return;
@@ -50,16 +64,39 @@ export default function Play() {
     finally { lock.current = false; setBusy(false); }
   }
   const disabled = busy || needsSync;
-  return <div className={s.shell}><a className={s.skip} href="#play-main">게임으로 건너뛰기</a><header className={s.header}><Link href="/">♜ 용범의 탑</Link><nav aria-label="게임 메뉴"><Link href="/">기존 데모</Link><Link href="/intro">인트로</Link><a href="#rankings">랭킹</a></nav></header>
-    <main id="play-main" className={s.main} aria-busy={busy}><span className={s.kicker}>THE TOWER · 증거로 여는 열 개의 문</span><h1 ref={heading} tabIndex={-1}>{game ? `${game.floor}층 · ${game.problem.title}` : "새로운 등반을 시작하세요"}</h1><p>기록을 탐색하고, 분류·판정·조치로 봉인을 해제하세요.</p>
-      <section className={s.toolbar} aria-label="등반 관리"><button disabled={busy} onClick={() => saved || game ? setConfirmNew(true) : void load("runs", { requestId: crypto.randomUUID() })}>새 등반</button><button disabled={busy || !saved} onClick={() => saved && void load(`runs/${encodeURIComponent(saved)}`)}>저장한 등반 이어하기</button>{game && <button disabled={busy} onClick={() => void load(`runs/${encodeURIComponent(game.runId)}`)}>현재 상태 다시 불러오기</button>}</section>
-      {confirmNew && <section className={s.card} aria-label="새 등반 확인"><p>새 등반이 생성되면 이어하기 기록이 바뀝니다. 계속할까요?</p><div className={s.row}><button disabled={busy} onClick={() => void load("runs", { requestId: crypto.randomUUID() })}>새 등반 시작</button><button disabled={busy} onClick={() => setConfirmNew(false)}>취소</button></div></section>}
-      <div role="status">{busy ? "기록을 불러오는 중…" : storageNote}</div>{error && <div className={s.error} role="alert">{error}{needsSync && <p>요청이 처리됐을 수 있습니다. 현재 상태를 다시 불러온 후 계속하세요.</p>}</div>}<p role="status">{feedback}</p>
-      {!game && <section className={s.card}><h2>탐험 준비</h2><p>새 등반을 시작하거나 저장한 기록을 불러오세요. 첫 3층은 쉬운 문제로 시작하며, 한 번의 등반에서 같은 문제는 반복되지 않습니다.</p><p>가상 터미널과 증거 선택 문제를 모두 만나게 됩니다. 판단은 수집한 기록을 바탕으로 하세요.</p></section>}
-      {game && <><section className={s.summary} aria-label="등반 현황"><strong>{game.floor} / 10층 · {game.cleared ? "통과" : "조사 중"}</strong><span>점수 {game.score}</span><span>신뢰도 {game.trust}</span><span>오답 {game.totalWrong} · 힌트 {game.totalHints}</span><progress max={10} value={game.floor - 1 + Number(game.cleared)} aria-label="통과한 층" /></section>
-        <div className={s.layout}><div className={s.column}><Investigation key={`${game.runId}:${game.floor}`} game={game} busy={disabled} output={output} act={act} /><Judgment key={`${game.runId}:${game.floor}:${game.step?.key}`} game={game} busy={disabled} act={act} /></div><aside><Companion game={game} busy={disabled} act={act} /><p>문제 유형: {game.problem.type === "terminal" ? "가상 터미널" : "증거 선택"} · {game.problem.difficulty}</p><small>출제 시드: {game.seed}</small></aside></div>
-        {game.ending && <section className={s.card}><h2>{game.ending.title}</h2><p>{game.ending.narrative}</p><p>최종 점수 {game.score} · 신뢰도 보너스 {game.ending.bonus} (총점에 포함)</p><p>총 오답 {game.totalWrong} · 힌트 {game.totalHints}</p><p>{game.ending.badges.join(" · ")}</p><button disabled={disabled} onClick={() => void act("ranking", {})}>등반 기록 등록</button></section>}
+  const trust = game?.trust ?? 60;
+  const raonTier = trust >= 80 ? "high" : trust >= 50 ? "mid" : "low";
+  const playerTier = game?.cleared ? "win" : "idle";
+  return <div className={`${s.shell} ${leaving ? s.leaving : ""}`}>
+    <a className={s.skip} href="#play-main">게임으로 건너뛰기</a>
+    <header className={s.top}>
+      <Link href="/start" className={s.back} onClick={e => { e.preventDefault(); nav("/start"); }}>← 직업 선택</Link>
+      <span className={s.badge}>🛡️ 수호자</span>
+    </header>
+
+    {game && <div className={s.floorbar}><span className={s.floortag}>⛰ 제 {game.floor} 층</span><span className={s.status}>{game.cleared ? "통과" : "조사 중"}</span></div>}
+    <h1 ref={heading} tabIndex={-1} className={s.title}>{game ? game.problem.title : "새로운 등반을 시작하세요"}</h1>
+    <p className={s.sub}>{game ? `${game.problem.difficulty} · 분류→판정→조치로 봉인을 해제하세요` : "기록을 탐색하고 증거로 관문을 여세요 · 합성·격리"}</p>
+
+    {game && <div className={s.stage}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img className={s.player} src={`/game/sprites/player_${playerTier}.png`} alt="플레이어" />
+      <div className={s.speech}><span className={s.who}>라온</span>{game.problem.allyOpening}</div>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img className={s.raon} src={`/game/sprites/raon_${raonTier}.png`} alt="라온" />
+    </div>}
+
+    <main id="play-main" className={s.main} aria-busy={busy}>
+      <div role="status" className={s.note}>{busy ? "기록을 불러오는 중…" : storageNote}</div>{error && <div className={s.error} role="alert">{error}{needsSync && <p>요청이 처리됐을 수 있습니다. 현재 상태를 다시 불러온 후 계속하세요.</p>}<p><Link href="/start" onClick={e => { e.preventDefault(); nav("/start"); }}>← 직업 선택으로</Link></p></div>}{feedback && <p role="status" className={s.feedback}>{feedback}</p>}
+      {!game && !error && <section className={s.card}><p className={s.note}>등반을 준비하는 중…</p></section>}
+      {game && <>
+        <section className={s.summary} aria-label="등반 현황"><span>점수 <b>{game.score}</b></span><span>신뢰도 <b>{game.trust}</b></span><span>오답 <b>{game.totalWrong}</b></span><span>힌트 <b>{game.totalHints}</b></span></section>
+        <Investigation key={`${game.runId}:${game.floor}`} game={game} busy={disabled} output={output} act={act} />
+        <Judgment key={`${game.runId}:${game.floor}:${game.step?.key}`} game={game} busy={disabled} act={act} />
+        <Companion game={game} busy={disabled} act={act} />
+        {game.ending && <section className={`${s.card} ${s.ending}`}><h2>🏳️ {game.ending.title}</h2><p>{game.ending.narrative}</p><p className={s.note}>최종 점수 {game.score} · 신뢰도 보너스 {game.ending.bonus} · 오답 {game.totalWrong} · 힌트 {game.totalHints}</p>{game.ending.badges.length > 0 && <p>획득 칭호: {game.ending.badges.join(" · ")}</p>}<button className={s.primary} disabled={disabled} onClick={() => void act("ranking", {})}>등반 기록 등록</button></section>}
       </>}
-      <section id="rankings" className={s.card}><h2>등반 기록 · 랭킹</h2><p>총점 → 신뢰도 → 힌트 사용 수 순서로 비교합니다.</p><button disabled={busy} onClick={() => void ranking()}>랭킹 불러오기</button><Rankings ranks={ranks} /></section>
-    </main></div>;
+      <section id="rankings" className={s.card}><h2>랭킹</h2><p className={s.note}>총점 → 신뢰도 → 힌트 사용 수 순서로 비교합니다.</p><button disabled={busy} onClick={() => void ranking()}>랭킹 불러오기</button><Rankings ranks={ranks} /></section>
+    </main>
+  </div>;
 }

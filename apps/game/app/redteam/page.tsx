@@ -5,8 +5,11 @@
 // 각 챌린지는 '실제 웹페이지처럼' 렌더되고, 페이지 안에서 링크 클릭·폼 입력으로 상호작용한다.
 // 점진 전환: 기존 블루팀 게임(play/)과 별도 라우트. 합성·결정적, 실제 요청 없음.
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import styles from "./redteam.module.css";
+import { useFadeNav } from "../use-fade-nav";
+
+const RT_SAVE_KEY = "ybt-rt-save";
 
 type StartInfo = {
   challengeId: string; title: string; siteName: string; difficulty: string; owasp: string;
@@ -19,6 +22,7 @@ type VisitResp = {
 };
 
 export default function RedTeam() {
+  const { leaving, nav } = useFadeNav();
   const [seed, setSeed] = useState<string>("");
   const [info, setInfo] = useState<StartInfo | null>(null);
   const [cid, setCid] = useState<string>("");
@@ -49,6 +53,7 @@ export default function RedTeam() {
     const info: StartInfo = await (await fetch(`/api/redteam/floor/${s}/${n}`)).json();
     setInfo(info); setCid(info.challengeId);
     setUsed(0); setHints([]); setFlag(""); setResult(null); setCleared(false);
+    try { localStorage.setItem(RT_SAVE_KEY, JSON.stringify({ seed: s, floor: n })); } catch { /* 저장 실패 무시 */ }
     await go(info.entry, undefined, info.challengeId);
   }, [go]);
 
@@ -59,7 +64,17 @@ export default function RedTeam() {
     await loadFloor(c.seed, 1);
   }, [loadFloor]);
 
-  useEffect(() => { void newClimb(); }, [newClimb]);
+  const started = useRef(false);
+  useEffect(() => {  // ?new=1이면 새 등반, 아니면 저장된 등반 이어하기(없으면 새 등반)
+    if (started.current) return;
+    started.current = true;
+    const wantNew = new URLSearchParams(window.location.search).get("new") === "1";
+    let save: { seed?: string; floor?: number } | null = null;
+    try { const raw = localStorage.getItem(RT_SAVE_KEY); if (raw) save = JSON.parse(raw); } catch { save = null; }
+    if (!wantNew && save && typeof save.seed === "string" && typeof save.floor === "number") {
+      setSeed(save.seed); void loadFloor(save.seed, save.floor);
+    } else void newClimb();
+  }, [loadFloor, newClimb]);
 
   function onViewportClick(e: React.MouseEvent) {
     const a = (e.target as HTMLElement).closest("a");
@@ -106,19 +121,14 @@ export default function RedTeam() {
     : "";
 
   return (
-    <div className={styles.wrap}>
+    <div className={`${styles.wrap} ${leaving ? styles.leaving : ""}`}>
       <header className={styles.top}>
-        <Link href="/start" className={styles.back}>← 직업 선택</Link>
+        <Link href="/start" className={styles.back} onClick={(e) => { e.preventDefault(); nav("/start"); }}>← 직업 선택</Link>
         <span className={styles.badge}>🗡️ 파훼자</span>
       </header>
 
       <div className={styles.floorbar}>
-        <span className={styles.floortag}>⛰ 제 {info?.floor ?? "-"} 층 <span className={styles.of}>/ 총 {info?.floors ?? "-"} 층</span></span>
-        <div className={styles.progress}>
-          {Array.from({ length: info?.floors ?? 0 }).map((_, i) => (
-            <i key={i} className={i + 1 < (info?.floor ?? 0) ? styles.pDone : i + 1 === info?.floor ? styles.pNow : styles.pNext} />
-          ))}
-        </div>
+        <span className={styles.floortag}>⛰ 제 {info?.floor ?? "-"} 층</span>
       </div>
 
       <h1 className={styles.title}>{info ? `${info.title} — ${info.owasp}` : "등반 준비 중…"}</h1>

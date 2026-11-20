@@ -186,3 +186,49 @@
 .shell { animation: pageIn .42s ease both; }
 @keyframes pageIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .shell { animation: none; } }
+
+/* 이동 시 페이드 아웃 */
+.leaving { animation: fadeOut .36s ease forwards; pointer-events: none; }
+@keyframes fadeOut { to { opacity: 0; } }
+
+/* ===== 동료 탭 — 신뢰도 게이지·규칙 ===== */
+.trustBox { background: var(--surface-soft); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin: 14px 0; }
+.trustHead { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+.trustHead strong { font-size: 15px; }
+.trustHead span { color: var(--muted); font-size: 12px; }
+.gauge { position: relative; height: 16px; border-radius: 999px; background: #2a2436; overflow: hidden; border: 1px solid var(--line); }
+.gaugeFill { height: 100%; background: linear-gradient(90deg, #6a4dd0, var(--indigo)); display: flex; align-items: center; justify-content: flex-end; }
+.gaugeFill span { color: #fff; font-size: 10px; font-weight: 700; padding-right: 6px; }
+.trustBands { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; font-size: 11px; color: var(--muted); }
+.trustBands b { color: var(--violet); }
+.rules { display: grid; gap: 8px; margin: 12px 0; }
+.rule { background: var(--surface-soft); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: 13px; color: var(--ink); }
+.rule b { color: var(--violet); }
+.up { color: #49d17d; font-weight: 700; margin-right: 6px; }
+.down { color: #ff8f8f; font-weight: 700; margin-right: 6px; }
+@media (max-width: 560px) { .trustBands { grid-template-columns: 1fr; } }
+
+/* ===== 랭킹 리스트 ===== */
+.rankList { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 8px; }
+.rankList li { display: flex; align-items: center; gap: 12px; background: var(--surface-soft); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; }
+.rankNo { width: 28px; text-align: center; font-weight: 800; color: var(--violet); font-family: Georgia, serif; }
+.rankName { font-weight: 600; flex: 1; min-width: 0; }
+.rankMeta { color: var(--muted); font-size: 12px; white-space: nowrap; }
+
+/* ===== 기록 탭 — 엔딩·칭호 수집 ===== */
+.collectBody { padding: 16px 20px 20px; }
+.collectHead { display: flex; justify-content: space-between; align-items: baseline; margin: 6px 0 10px; }
+.collectHead strong { font-size: 14px; }
+.collectHead span { color: var(--violet); font-weight: 700; font-size: 13px; }
+.endGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 18px; }
+.endCard { display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 10px; padding: 12px; font-size: 13px; }
+.endCard.seen { background: var(--indigo-soft); border-color: var(--indigo); }
+.endCard.locked { background: var(--surface-soft); color: var(--muted); }
+.endMark { font-size: 16px; }
+.endCard.seen .endMark { color: var(--gold); }
+.badgeRow { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+.badgeChip { border-radius: 999px; padding: 7px 16px; font-size: 13px; font-weight: 600; border: 1px solid var(--line); }
+.badgeHas { background: var(--indigo-soft); color: var(--violet); border-color: var(--indigo); }
+.badgeLocked { background: var(--surface-soft); color: var(--muted); }
+.recordCta { margin-top: 6px; }
+@media (max-width: 560px) { .endGrid { grid-template-columns: 1fr; } }
