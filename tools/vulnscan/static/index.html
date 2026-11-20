@@ -367,6 +367,19 @@
   .game-heading h1 { font-size:1.25rem; margin:0 0 4px; }
   .game-heading p { color:var(--muted); font-size:.84rem; margin:0; }
   .game-heading a { color:var(--brand); font-size:.8rem; white-space:nowrap; }
+  .game-exit { display:none; }
+  /* ===== 게임 몰입 모드: vulnscan 헤더 숨김 + 다크 ===== */
+  html.game-mode .topbar { display:none; }
+  html.game-mode, html.game-mode body { background:#0b0d12; }
+  html.game-mode main.game-open { max-width:none; padding:0; }
+  html.game-mode .game-heading { margin:0; padding:8px 14px; background:#0b0d12;
+    border-bottom:1px solid #1f242e; justify-content:flex-start; gap:14px; }
+  html.game-mode .game-heading > div { display:none; }   /* 큰 제목·설명 숨김(몰입) */
+  html.game-mode .game-heading h1, html.game-mode .game-heading p { display:none; }
+  html.game-mode .game-exit { display:inline-flex; color:#9aa3b2; font-size:.85rem; }
+  html.game-mode .game-exit:hover { color:#e6e8ee; }
+  html.game-mode .game-heading a[target="_blank"] { margin-left:auto; color:#6b7686; }
+  html.game-mode #game-frame { height:calc(100dvh - 42px); min-height:0; border:none; border-radius:0; }
   #game-frame { width:100%; height:calc(100dvh - 170px); min-height:540px;
     border:1px solid var(--line); border-radius:12px; background:var(--bg); }
   #game-frame[hidden], #game-loading[hidden] { display:none; }
@@ -388,7 +401,6 @@
     <a href="#scan" class="brand" title="홈으로"><span class="logo">🛡</span> VulnScan <span class="edu">학습용</span></a>
     <nav class="tabs" aria-label="분석 메뉴">
       <a href="#scan" id="tab-scan" class="on">스캔</a>
-      <a href="#lab" id="tab-lab">실습 미션</a>
       <a href="#cmd" id="tab-cmd">공격 커맨드</a>
       <a href="#owasp" id="tab-owasp">OWASP 사전</a>
     </nav>
@@ -401,6 +413,7 @@
 <main>
   <section class="view" id="view-game" aria-labelledby="game-title">
     <div class="game-heading">
+      <a href="#scan" class="game-exit">← 분석 도구로</a>
       <div><h1 id="game-title">용범의 탑</h1><p>기록을 탐색하고 증거로 판단하는 게임 · 현재는 합성 데이터 기반 FE 데모입니다.</p></div>
       <a href="/game/" target="_blank" rel="noopener">게임만 새 탭에서 열기 ↗</a>
     </div>
@@ -530,19 +543,6 @@
     <div class="ref-grid" id="ref-grid"></div>
   </section>
 
-  <!-- ===== 실습 미션 뷰 ===== -->
-  <section class="view" id="view-lab">
-    <div class="hero">
-      <h1>실습 미션 — 직접 해보기</h1>
-      <p>로컬 랩을 상대로 <b>직접</b> 취약점을 터뜨려 보는 실습입니다.<br><span style="white-space:nowrap"><b>브라우저에서 실제 랩 열기</b>로 손수 해보거나, <b>전송·판정</b>으로 대시보드에서 바로 성공 여부를 확인합니다.</span><br>전부 로컬·더미 데이터 전용입니다.</p>
-    </div>
-    <div class="lab-target">
-      <label for="lab-base">실습 대상(로컬)</label>
-      <input id="lab-base" type="text" value="http://127.0.0.1:8000">
-    </div>
-    <div class="warnbar">⚠ 이 실습은 본인이 소유·운영하는 격리된 로컬 랩에서만 사용합니다. 외부·타인 시스템 대상 사용은 불법입니다.</div>
-    <div id="missions"></div>
-  </section>
 </main>
 
 <div class="modal-bg" id="modal-bg">
@@ -663,7 +663,7 @@
   });
 
   // ===== 탭 라우팅 =====
-  const VIEWS = ["scan","lab","cmd","owasp","report","game"];  // report는 탭 없는 하위 페이지
+  const VIEWS = ["scan","cmd","owasp","report","game"];  // report는 탭 없는 하위 페이지
   let gameLoading = false;
   async function loadGame(){
     const frame = document.getElementById("game-frame");
@@ -701,6 +701,7 @@
       }   // report엔 탭이 없음 → 건너뜀
     });
     document.querySelector("main").classList.toggle("game-open", h==="game");
+    document.documentElement.classList.toggle("game-mode", h==="game");  // 게임 진입: 헤더 숨김·다크 몰입
     if(h==="game") loadGame();
     if(h==="report") renderReportView();
   }
@@ -901,124 +902,6 @@
   }
   $("#run").addEventListener("click", scan);
   $("#target").addEventListener("keydown", e=>{ if(e.key==="Enter") scan(); });
-
-  // ===== 실습 미션 =====
-  const escA = s => esc(s).replace(/"/g,"&quot;");
-  const MISSIONS = [
-    { id:"a10", owasp:"A10", diff:"쉬움",
-      title:"디버그 페이지 노출시키기",
-      goal:"존재하지 않는 경로를 요청해 <b>Django 디버그 페이지</b>(설정·스택)를 띄운다.",
-      method:"GET", path:"/vulnscan_mission_zzz/",
-      hint:["운영이라면 깔끔한 404가 떠야 하지만, DEBUG=1이면 상세 오류가 뜬다.",
-            "아무 없는 경로나 요청하면 된다. 경로 자체가 공격이라 페이로드가 없다."],
-      success:{type:"contains", any:["Django Version","Traceback (most recent call last)","You're seeing this error","URLconf"]},
-      okMsg:"성공 — 디버그 페이지가 노출됩니다. 설정·설치 앱·소스 경로가 보이죠. 운영 전환 시 DJANGO_DEBUG=0 필요.",
-      noMsg:"디버그 흔적이 안 보입니다. DEBUG가 꺼져 있거나 커스텀 오류 페이지일 수 있습니다." },
-    { id:"sqli", owasp:"A05", diff:"보통",
-      title:"SQL 인젝션으로 관리자 해시 뽑기",
-      goal:"공지 검색 <code>/notices/?q=</code> 에 <b>UNION 주입</b>으로 계정 테이블의 비밀번호 해시를 응답에 끌어낸다.",
-      method:"GET", path:"/notices/", param:"q",
-      payloads:[{label:"정상 검색", value:"독감"},
-                {label:"불리언 참", value:"' OR '1'='1"},
-                {label:"해시 유출(UNION)", value:"' UNION SELECT id,username||' = '||password,3,4,5 FROM auth_user--"}],
-      hint:["먼저 '정상 검색'으로 평소 응답을 보고, 공격 페이로드로 바꿔 응답 차이를 본다.",
-            "UNION은 컬럼 수가 맞아야 성사된다. 이 랩의 공지 쿼리는 5개 컬럼이다.",
-            "성공하면 응답 어딘가에 md5$... 형태의 해시가 섞여 나온다."],
-      success:{type:"contains", any:["md5$"]},
-      okMsg:"성공 — 응답에 md5$ 해시가 노출됩니다. MD5 저장(A04)이라 오프라인 크랙에 취약.",
-      noMsg:"해시가 안 보입니다. 컬럼 수·따옴표를 확인하세요('해시 유출' 버튼이 정답 페이로드)." },
-    { id:"xss", owasp:"A05", diff:"보통",
-      title:"반사형 XSS 반사 여부 확인",
-      goal:"검색어에 마커를 넣어 응답에 <b>이스케이프 없이</b> 그대로 반사되는지 확인한다.",
-      method:"GET", path:"/notices/", param:"q",
-      payloads:[{label:"XSS 마커", value:"<svg/onload=alert(1)>vulnscanX"}],
-      hint:["입력의 <, > 가 변환 없이 그대로 HTML에 박히면 스크립트 실행 위험이 있다.",
-            "마커가 원문(<svg...)으로 반사되면 취약, &lt;svg...로 바뀌면 안전이다."],
-      success:{type:"reflect-raw", raw:"<svg/onload=alert(1)>vulnscanX"},
-      okMsg:"성공 — 입력이 이스케이프 없이 반사됩니다(반사형 XSS 가능).",
-      noMsg:"입력이 이스케이프되어 반사됩니다(이 파라미터는 양호). 저장형·다른 파라미터는 수동 점검 필요." },
-    { id:"admin", owasp:"A02", diff:"쉬움", manual:true,
-      title:"약한 기본 관리자 계정으로 로그인",
-      goal:"하드코딩된 기본 계정으로 <b>관리자 로그인</b>에 성공한다.",
-      method:"GET", path:"/admin/login/", cred:"admin / admin1234",
-      hint:["로그인은 CSRF 토큰이 필요해 자동 전송 대신 브라우저에서 직접 해본다.",
-            "'브라우저에서 열기'로 로그인 페이지를 열고, admin / admin1234 를 입력한다."],
-      manualNote:"CSRF 때문에 자동 판정 대신 브라우저에서 직접 로그인해 확인합니다. 들어가지면 성공입니다." },
-  ];
-
-  function labBase(){ return ($("#lab-base").value || "http://127.0.0.1:8000").trim().replace(/\/+$/,""); }
-  function curPay(m){ const el=document.getElementById("pay-"+m.id); return el ? el.value : ""; }
-  function missionUrl(m){
-    let u = labBase() + m.path;
-    if(m.param){ const sep = u.includes("?") ? "&" : "?"; u += sep + m.param + "=" + encodeURIComponent(curPay(m)); }
-    return u;
-  }
-
-  function renderMissions(){
-    $("#missions").innerHTML = MISSIONS.map(m=>{
-      const o = OWASP[m.owasp];
-      const pays = m.payloads ? `<div class="pay-row"><span class="pl">페이로드</span>`
-        + m.payloads.map(p=>`<button class="pay-btn" data-mid="${m.id}" data-val="${escA(p.value)}">${esc(p.label)}</button>`).join("")
-        + `</div><input class="pay-input" id="pay-${m.id}" value="${escA(m.payloads[0].value)}">` : "";
-      const cred = m.cred ? `<div class="pay-row"><span class="pl">계정</span><span class="m-cred">${esc(m.cred)}</span></div>` : "";
-      const goBtn = m.manual ? "" : `<button class="m-btn go" data-go="${m.id}">전송·판정</button>`;
-      const hints = `<details class="m-hint"><summary></summary><ol>${m.hint.map(x=>`<li>${x}</li>`).join("")}</ol>`
-        + (m.manual?`<p style="font-size:.82rem;margin:9px 0 0;color:var(--muted)">${m.manualNote}</p>`:"") + `</details>`;
-      return `<div class="mcard">
-        <div class="mh"><button class="owasp-chip" onclick="openInfo('${m.owasp}')">${m.owasp}</button>
-          <h3>${esc(m.title)}</h3><span class="diff d-${m.diff}">${m.diff}</span></div>
-        <p class="goal">${m.goal}</p>
-        ${cred}${pays}
-        <div class="m-actions">
-          <button class="m-btn open" data-open="${m.id}">브라우저에서 열기 ↗</button>
-          ${goBtn}
-          <button class="m-btn code" onclick="openInfo('${m.owasp}')">코드로 보기</button>
-        </div>
-        <div class="m-result" id="res-${m.id}"></div>
-        ${hints}
-      </div>`;
-    }).join("");
-    // 페이로드 버튼 → 입력칸 채우기
-    document.querySelectorAll(".pay-btn").forEach(b=>b.addEventListener("click",()=>{
-      const el=document.getElementById("pay-"+b.dataset.mid); if(el) el.value=b.dataset.val;
-    }));
-    document.querySelectorAll("[data-open]").forEach(b=>b.addEventListener("click",()=>{
-      const m=MISSIONS.find(x=>x.id===b.dataset.open); window.open(missionUrl(m),"_blank","noopener");
-    }));
-    document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>runMission(b.dataset.go,b)));
-  }
-
-  function judge(m, body){
-    if(m.success.type==="reflect-raw") return body.includes(m.success.raw);
-    if(m.success.type==="contains") return m.success.any.some(n=>body.includes(n));
-    return false;
-  }
-  function snippet(body, needles){
-    for(const n of needles){ const i=body.indexOf(n); if(i>=0) return body.slice(Math.max(0,i-50), i+n.length+70); }
-    return body.slice(0,180);
-  }
-
-  async function runMission(id, btn){
-    const m = MISSIONS.find(x=>x.id===id); const box=$("#res-"+id);
-    const url = missionUrl(m);
-    btn.disabled=true; const t=btn.textContent; btn.textContent="전송 중…";
-    box.className="m-result show"; box.innerHTML="요청 중…";
-    try{
-      const res = await fetch("/api/probe",{method:"POST",headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({url, method:m.method})});
-      const r = await res.json();
-      if(!r.ok){ box.className="m-result show err";
-        box.innerHTML=`<div class="rtitle">요청 실패</div>${esc(r.error||"")}`; return; }
-      const needles = m.success.type==="reflect-raw" ? [m.success.raw] : m.success.any;
-      const ok = judge(m, r.body||"");
-      box.className="m-result show "+(ok?"ok":"no");
-      const snp = ok ? `<pre>${esc(snippet(r.body||"", needles))}</pre>` : "";
-      box.innerHTML = `<div class="rtitle">${ok?"✅ 성공":"ℹ️ 미성공"}</div>`
-        + `${ok?m.okMsg:m.noMsg}${snp}`
-        + `<div class="rmeta">${esc(r.url)} · HTTP ${r.status} · ${r.len}B · ${r.elapsed}s</div>`;
-    }catch(e){ box.className="m-result show err"; box.innerHTML=`<div class="rtitle">오류</div>${esc(""+e)}`; }
-    finally{ btn.disabled=false; btn.textContent=t; }
-  }
 
   // ===== 공격 커맨드 정리 (팀 실제 사용 기록) =====
   const CMDSETS = [
@@ -1303,7 +1186,7 @@
     saveBlob(buildReportJSON(scopeList()), "application/json;charset=utf-8", "json");
   }
 
-  renderRef(); renderMissions(); renderCmds(); route(); updateModeUi();
+  renderRef(); renderCmds(); route(); updateModeUi();
 </script>
 </body>
 </html>
