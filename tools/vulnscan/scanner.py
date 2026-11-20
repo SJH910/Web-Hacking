@@ -262,6 +262,9 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(400, '{"error": "잘못된 요청입니다."}')
         parts = [unquote(p) for p in path[len("/api/redteam/"):].split("/") if p]
         status, obj = redteam.handle(method, parts, body)
+        raon = getattr(self.server, "game_raon", None)
+        if status == 200 and raon is not None:
+            obj = raon_llm.decorate_redteam(raon, obj)
         self._send(status, json.dumps(obj, ensure_ascii=False))
 
     def _game_api(self, method, path):
