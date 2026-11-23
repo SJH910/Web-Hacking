@@ -116,6 +116,24 @@ MODEL_DIR="$HOME/projects/llm-from-scratch"
 python3 tools/vulnscan/scanner.py --llm-port 8910
 ```
 
+### 대안 — 릴리스 모델 자체 서버 (`raon_model_server.py`)
+
+`llm-from-scratch` 프로젝트 없이, GitHub 릴리스 `raon-llm-v1`의 가중치만으로 바로 서빙한다.
+GPT-2 medium(355M) instruction-tuned, **영어 전용**(A05 소견 분석에 적합, 한국어 라온 대사엔 Ollama 권장).
+
+```bash
+# 가중치 다운로드(~1.6GB, 저장소 밖)
+gh release download raon-llm-v1 --repo SJH910/Web-Hacking \
+  --pattern "gpt2-medium355M-sft.pth" --dir ~/code-test/raon-model
+# torch·tiktoken 필요: pip install torch tiktoken 'numpy<2'
+python3 tools/vulnscan/raon_model_server.py \
+  --weights ~/code-test/raon-model/gpt2-medium355M-sft.pth --port 8910 --threads 4
+```
+
+- `GPTModel`(GPT-2 medium 구조)을 내장해 state_dict를 직접 로드한다. 별도 프로젝트 불필요.
+- OpenAI 호환 `POST /v1/chat/completions`(`model=local-gpt2`), system+user 메시지·`max_tokens`·`temperature` 수용.
+- A05(자체모델)·라온(Ollama) 동시: `scanner.py --llm-port 8910 --game-llm-port 11434 --game-llm-model qwen2.5:3b`
+
 대시보드 `http://127.0.0.1:8900`에서 실습 웹앱을 능동 스캔한다.
 스캐너가 감지한 첫 A05 의심 소견 카드에 영문 모델 설명이 표시된다.
 스캔 결과의 판정과 모델 설명은 독립적이다. API 오류 시 소견 카드에 오류가 표시되며 기존 판정이 반환된다.
